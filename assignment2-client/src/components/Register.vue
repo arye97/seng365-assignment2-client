@@ -16,9 +16,9 @@
             <div class="container h-100">
                 <div class="row h-100 align-items-center">
                     <div class="col-12 text-center">
-                        <h1 class="font-weight-light">Welcome to Hakinakina</h1>
-                        <p class="lead">Plan your route with the best</p><br/>
-                        <h1>
+                        <h1 class="font-weight-light">Welcome to Signalign</h1>
+                        <p class="lead">Sign the future</p>
+                        <h1 class="font-weight-light">
                             Register with us<br/>
                         </h1>
                     </div>
@@ -66,172 +66,54 @@
 </template>
 
 <script>
-    // import server from '../../Api';
-    // import Multiselect from 'vue-multiselect'
-    // import {tokenStore} from '../../main';
+    import server from '../Api'
+    import {tokenStore} from "../main";
 
-    // async function validUser(newUser, passwordCheck) {
-    //     if (newUser.password !== passwordCheck) {
-    //         showError('alert_password_match');
-    //         return 'password';
-    //     }
-    //     let count = 0; //count of blank fields
-    //     if(newUser.password === '') {
-    //         showError('alert_password');
-    //         count += 1;
-    //     }
-    //     if(passwordCheck === '') {
-    //         showError('alert_password_check');
-    //         count += 1;
-    //     }
-    //     if(newUser.firstname === '') {
-    //         showError('alert_first_name');
-    //         count += 1;
-    //     }
-    //     if(newUser.lastname === '') {
-    //         showError('alert_last_name');
-    //         count += 1;
-    //     }
-    //     if(newUser.date_of_birth === '') {
-    //         showError('alert_dob');
-    //         count += 1;
-    //     }
-    //     if(newUser.gender === '') {
-    //         showError('alert_gender');
-    //         count += 1;
-    //     }
-    //     return count;
-    // }
-    //
-    // export default {
-    //     components: { Multiselect, Header },
-    //     name: "NewUser",
-    //     data() {
-    //         return {
-    //             firstname: '',
-    //             middlename: '',
-    //             lastname: '',
-    //             email: '',
-    //             password: '',
-    //             passwordCheck: '',
-    //             nickname: '',
-    //             gender: '',
-    //             date_of_birth: '',
-    //             fitness: '',
-    //             fitnessOptions: [{value: 1, desc: "Unfit, no regular exercise, being active is very rare"},
-    //                 {value: 2, desc: "Not overly fit, occasional recreational fitness activity, active a few times a month"},
-    //                 {value: 3, desc: "Moderately fit, enjoys fitness activities for recreation, active once or twice a week"},
-    //                 {value: 4, desc: "Fit, may compete occasionally in small scale events, active most days"},
-    //                 {value: 5, desc: "Very fit, competitive athlete, extremely active"}
-    //             ],
-    //             bio: '',
-    //             message_form: "",
-    //             message_password_check: '',
-    //             countries: [],
-    //             genders: ['Male', 'Female', 'Non-Binary'],
-    //             passports: []
-    //         }
-    //     },
-    //
-    //     mounted () {
-    //         let select = [];
-    //         // Create a request variable and assign a new XMLHttpRequest object to it.
-    //         let request = new XMLHttpRequest();
-    //         //build url
-    //         let url = new URL(getCountryNames);
-    //         // Open a new connection, using the GET request on the URL endpoint;
-    //         request.open('GET', url, true);
-    //
-    //         request.onload = function() {
-    //             // If the request is successful
-    //             if(request.status >= 200 && request.status < 400) {
-    //                 let data = JSON.parse(this.response);
-    //                 data.forEach(country => {
-    //                     let elmt = country.name;
-    //                     select.push(elmt)
-    //                 } )
-    //             } else {
-    //                 select = 'List is empty';
-    //                 let errorAlert = document.getElementById("alert_form");
-    //                 this.message_form = 'Error fetching countries';
-    //                 errorAlert.hidden = false;          //Show alert bar
-    //             }
-    //         };
-    //         // Send request
-    //         this.countries = select;
-    //         request.send()
-    //     },
-    //
-    //     methods: {
-    //         async registerUser() {
-    //             // Save the data as a newUser object
-    //             const newUser = {
-    //                 lastname: this.lastname.trim(),
-    //                 firstname: this.firstname.trim(),
-    //                 middlename: this.middlename.trim(),
-    //                 nickname: this.nickname.trim(),
-    //                 primary_email: this.email.trim(),
-    //                 password: this.password.trim(),
-    //                 date_of_birth: this.date_of_birth,
-    //                 gender: this.gender,
-    //                 bio: this.bio.trim(),
-    //                 fitness: this.fitness.value,
-    //                 passports: this.passports
-    //             };
-    //             let validCount = await validUser(newUser, this.passwordCheck);
-    //             console.log(validCount);
-    //             if (validCount === 'password') {
-    //                 //todo: passwords not matching alert box
-    //                 this.message_form = "Password and re-typed password do not match. Please try again"
-    //                 showError('alert_form');
-    //                 return;
-    //             } else if (validCount !== 0) {
-    //                 this.message_form = validCount.toString() + " blank or empty mandatory fields have been found. Please fill them in to register";
-    //                 showError('alert_form');
-    //                 return;
-    //             }
-    //             // The HTTP Post Request
-    //             await server.post('/profiles',
-    //                 newUser,
-    //                 {
-    //                     headers: {"Access-Control-Allow-Origin": "*", "content-type": "application/json"},
-    //                     withCredentials: true
-    //                 }
-    //             ).then(response => { //If successfully registered the response will have a status of 201
-    //                 if (response.status === 201) {
-    //                     console.log('User Registered Successfully!');
-    //                     tokenStore.setToken(response.data);
-    //                     this.$router.push('/profile'); //Routes to profile on successful register
-    //                 }
-    //             }).catch(error => {
-    //                 console.log(error);
-    //                 //Get alert bar element
-    //                 if (error.message === "Network Error" || error.message.includes("timeout")) {
-    //                     this.message_form = error.message;
-    //                 } else if (error.response.data.status === 409 || error.response.data.status === 403) { //Error 409: Email already exists, Error 403: Invalid date of birth or invalid name field
-    //                     this.message_form = error.response.data.message.toString(); //Set alert bar message to error message from server
-    //                 } else if (error.response.status === 400) { //Error 400: Bad request (missing fields)
-    //                     this.message_form = "An invalid register request has been received please try again"
-    //                 } else {    //Catch for any errors that are not specifically caught
-    //                     this.message_form = "An unknown error has occurred during register"
-    //                 }
-    //                 showError('alert_form');
-    //             });
-    //         }
-    //     },
-    //     computed: {
-    //         value: {
-    //             get () {
-    //                 return this.fitnessOptions.filter(
-    //                     option => this.fitness.includes(option.desc)
-    //                 )
-    //             },
-    //             set (newSelectedOptions) {
-    //                 this.fitness = newSelectedOptions.map(option => option.desc)
-    //             }
-    //         }
-    //     }
-    // }
+    export default {
+        name: "NewUser",
+        data() {
+            return {
+                name: '',
+                email: '',
+                password: null,
+                country: null,
+                city: null
+            }
+        },
+        methods: {
+            generateToken() {
+                let x = Math.random().toString(36).substr(2);
+                let y = Math.random().toString(36).substr(2);
+                return x + y; //should return a random string 31 chars long (nums and chars)
+            },
+            async registerUser() {
+                // Save the data as a newUser object
+                const newUser = {
+                    name: this.name.trim(),
+                    email: this.email.trim(),
+                    password: this.password.trim(),
+                    country: this.country.trim(),
+                    city: this.city.trim()
+                };
+
+                // The HTTP Post Request
+                await server.post('/api/v1/users/register',
+                    newUser,
+                    {
+                        headers: {"content-type": "application/json"}
+                    }
+                ).then(response => { //If successfully registered the response will have a status of 201
+                    if (response.status === 201) {
+                        console.log('User Registered Successfully!');
+                        tokenStore.setToken(this.generateToken());
+                        this.$router.push('/profile'); //Routes to profile on successful register
+                    }
+                }).catch(error => {
+                    console.error(error);
+                });
+            }
+        }
+    }
 
 </script>
 

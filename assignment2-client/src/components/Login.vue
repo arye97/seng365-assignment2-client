@@ -40,6 +40,7 @@
 
 <script>
     import server from '../Api';
+    import {tokenStore} from "../main";
     async function validUser(userLogin) {
         return (userLogin.email !== '' && userLogin.password !== '')
     }
@@ -53,7 +54,11 @@
             }
         },
         methods: {
-
+            generateToken() {
+                let x = Math.random().toString(36).substr(2);
+                let y = Math.random().toString(36).substr(2);
+                return x + y; //should return a random string 31 chars long (nums and chars)
+            },
             async login() {
                 const userLogin = {
                     email: this.email.trim(),
@@ -64,17 +69,18 @@
                     return valid;
                 }
                 // Send login post to serve
-                server.post('/login',
+                server.post('/api/v1/users/login',
                     userLogin,
                     {
-                        headers: {"Access-Control-Allow-Origin": "*", "content-type": "application/json"},
-                        withCredentials: true
+                        headers: {"content-type": "application/json"}
                     }
                 ).then(response => { //If successfully logged the response will have a status of 201
-                    if (response.status === 201) {
+                    if (response.status === 200) {
                         console.log('User Logged In Successfully!');
-                        //tokenStore.setToken(response.data);
+                        tokenStore.setToken(this.generateToken());
                         this.$router.push("/profile"); //Route to profile screen on successful login
+                    } else {
+                        console.log(response.status);
                     }
                 }).catch(error => { //If an error occurs during login (includes server side errors)
                     console.log(error);
