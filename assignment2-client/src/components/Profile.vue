@@ -1,35 +1,55 @@
 <template>
+    <div>
     <section>
-        <b-sidebar
-                type="is-light"
-                :fullheight="fullheight"
-                :open.sync="open"
-        >
-            <div class="p-1">
+        <b-navbar>
+            <template slot="brand">
+                <b-navbar-item tag="router-link" :to="{ path: '/about' }">
+                    <h1>About Petitions</h1>
+                </b-navbar-item>
+            </template>
+            <template slot="start">
+                <b-navbar-item v-on:click="goToPage('/profile/edit')">
+                    Edit Profile
+                </b-navbar-item>
+                <b-navbar-item v-on:click="goToPage('/petitions')">
+                    View Petitions
+                </b-navbar-item>
+            </template>
 
-                <b-menu>
-                    <b-menu-list label="Menu">
-                        <b-menu-item icon="information-outline" label="Info"></b-menu-item>
-                        <b-menu-item icon="settings">
-                            <template slot="label" slot-scope="props">
-                                Administrator
-                                <b-icon class="is-pulled-right" :icon="props.expanded ? 'menu-down' : 'menu-up'"></b-icon>
-                            </template>
-
-                        </b-menu-item>
-                        <b-menu-item icon="petitions" label="My Petitions">
-                            <b-menu-item label="I've Signed"></b-menu-item>
-                            <b-menu-item label="I've Created"></b-menu-item>
-                        </b-menu-item>
-                    </b-menu-list>
-                    <b-menu-list label="Actions">
-                        <b-menu-item label="Logout" v-on:click="logout"></b-menu-item>
-                    </b-menu-list>
-                </b-menu>
-            </div>
-        </b-sidebar>
-
+            <template slot="end">
+                <b-navbar-item tag="div">
+                    <div class="buttons">
+                        <a class="button is-primary" v-on:click="logout">
+                            <strong>Logout</strong>
+                        </a>
+                    </div>
+                </b-navbar-item>
+            </template>
+        </b-navbar>
     </section>
+    <!--Beginning the actual user profile-->
+        <br/><br/>
+    <section :key="this.user.name" v-if="this.user">
+        <div class="container">
+            <div class="notification text-center">
+                Welcome to your Petitions Account <strong> {{this.user.name}} </strong>
+            </div>
+        </div><br/>
+        <div class="container">
+            <div class="notification text-center">
+                Your details: <br/>
+                Your profile ID: {{this.profileId}}<br/>
+                Name: {{this.user.name}}<br/>
+                City: {{this.user.city}}<br/>
+                Country: {{this.user.country}}<br/>
+                <div class="text-center" v-if="this.user.email">
+                    Email: {{this.user.email}}<br/>
+                </div>
+            </div>
+
+        </div>
+    </section>
+    </div>
 </template>
 
 <script>
@@ -39,18 +59,51 @@
         name: "Profile",
         data() {
             return {
+                profileId: tokenStore.state.userId,
+                //for buefy functionality
                 profileViewing: "user-profile",
                 open: true,
                 fullheight: true,
+                toUpdate: false,
+
+                //get user data here
+                user: null
+
             };
         },
         mounted() {
 
             if (tokenStore === undefined) { //then there's no stored token
                 this.$router.push('/'); //routes back to login
+            } else {
+                console.log(tokenStore.state.token, tokenStore.state.userId)
             }
+            //get user details
+
+            server.get('/api/v1/users/'.concat(tokenStore.state.userId),
+                {headers: {'X-Authorization' : tokenStore.state.token}
+                }).then(response => {
+                    if (response.status === 200) {
+                        this.user = response.data;
+                        console.log(response.data);
+                    } else {
+                        console.log(response);
+                    }
+            }).catch(error => {
+                console.error(error);
+                tokenStore.setUserId(null);
+                tokenStore.setToken(null);
+                this.$router.push('/login');
+            })
+
+
+
         },
         methods: {
+
+            goToPage(endpoint) {
+                this.$router.push(endpoint);
+            },
             async logout() {
                 await server.post('/api/v1/users/logout', null,
                     {headers: {"content-type": "application/json", 'X-Authorization': tokenStore.state.token}
@@ -71,82 +124,8 @@
     };
 </script>
 <style lang="scss">
-    .p-1 {
-        padding: 1em;
+    .b-table-sticky-header {
+        position: sticky;
     }
-    .sidebar-page {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        min-height: 100%;
-        // min-height: 100vh;
-        .sidebar-layout {
-            display: flex;
-            flex-direction: row;
-            min-height: 100%;
-            // min-height: 100vh;
-        }
-    }
-    @media screen and (max-width: 1023px) {
-        .b-sidebar {
-            .sidebar-content {
-                &.is-mini-mobile {
-                    &:not(.is-mini-expand),
-                    &.is-mini-expand:not(:hover) {
-                        .menu-list {
-                            li {
-                                a {
-                                    span:nth-child(2) {
-                                        display: none;
-                                    }
-                                }
-                                ul {
-                                    padding-left: 0;
-                                    li {
-                                        a {
-                                            display: inline-block;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .menu-label:not(:last-child) {
-                            margin-bottom: 0;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    @media screen and (min-width: 1024px) {
-        .b-sidebar {
-            .sidebar-content {
-                &.is-mini {
-                    &:not(.is-mini-expand),
-                    &.is-mini-expand:not(:hover) {
-                        .menu-list {
-                            li {
-                                a {
-                                    span:nth-child(2) {
-                                        display: none;
-                                    }
-                                }
-                                ul {
-                                    padding-left: 0;
-                                    li {
-                                        a {
-                                            display: inline-block;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        .menu-label:not(:last-child) {
-                            margin-bottom: 0;
-                        }
-                    }
-                }
-            }
-        }
-    }
+
 </style>
