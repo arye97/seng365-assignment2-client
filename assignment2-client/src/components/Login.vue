@@ -1,30 +1,47 @@
 <template>
-    <section><br/><br/><br/>
-        <h1 class="text-center">Login to your Petitions Account</h1>
-    <br/>
-        <b-field label="Email">
-            <b-input type="email"
-                     v-model="email"
-                     placeholder="john@doe.com" required>
-            </b-input>
-        </b-field>
-        <b-field label="Password">
-            <b-input v-model="password"
-                     type="password"
-                     placeholder="Password"
-                     password-reveal
-                     required>
-            </b-input>
-        </b-field>
-        <b-field class="buttons">
-            <b-button type="is-primary" v-on:click="login">Login</b-button>
-            <b-button type="is-primary" outlined v-on:click="gotoPage('/register')">Register</b-button>
-        </b-field>
-    </section>
+    <div>
+        <div>
+            <b-navbar>
+                <template slot="brand">
+                    <b-navbar-item tag="router-link" :to="{ path: '/about' }">
+                        <h1>About Petitions</h1>
+                    </b-navbar-item>
+                </template>
+                <template slot="start">
+                    <b-navbar-item v-on:click="goToPage('/petitions')">
+                        View Petitions
+                    </b-navbar-item>
+                </template>
+            </b-navbar>
+        </div>
+        <section><br/><br/><br/>
+
+            <h2 class="text-center">Login to your Petitions Account</h2>
+        <br/>
+            <b-field label="Email">
+                <b-input type="email"
+                         v-model="email"
+                         placeholder="john@doe.com" required>
+                </b-input>
+            </b-field>
+            <b-field label="Password">
+                <b-input v-model="password"
+                         type="password"
+                         placeholder="Password"
+                         password-reveal
+                         required>
+                </b-input>
+            </b-field>
+            <b-field class="buttons">
+                <b-button type="is-primary" v-on:click="login">Login</b-button>
+                <b-button type="is-primary" outlined v-on:click="goToPage('/register')">Register</b-button>
+            </b-field>
+        </section>
+    </div>
 </template>
 
 <style scoped>
-    h1 {
+    h2 {
         font-size: x-large;
 
         text-align: center;
@@ -57,7 +74,7 @@
             }
         },
         methods: {
-            gotoPage(page) {
+            goToPage(page) {
                 this.$router.push(page);
             },
             async login() {
