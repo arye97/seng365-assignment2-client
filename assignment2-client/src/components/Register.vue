@@ -27,7 +27,7 @@
         </b-field>
 
         <b-field label="Password *">
-            <b-input v-model="password" placeholder="Must be more than 8 characters and be alphanumeric" required></b-input>
+            <b-input type="password" v-model="password" placeholder="Must be more than 8 characters and be alphanumeric" required></b-input>
         </b-field>
 
         <b-field label="City">

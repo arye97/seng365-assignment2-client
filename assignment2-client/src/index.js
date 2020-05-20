@@ -7,6 +7,7 @@ import About from './components/About'
 import Petitions from './components/Petitions'
 import EditProfile from './components/EditProfile'
 
+
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 Vue.use(Router);
 Vue.use(BootstrapVue);

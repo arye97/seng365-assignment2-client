@@ -4,7 +4,7 @@
             <b-navbar>
                 <template slot="brand">
                     <b-navbar-item tag="router-link" :to="{ path: '/about' }">
-                        <h1>About Petitions</h1>
+                        <h2>About Petitions</h2>
                     </b-navbar-item>
                 </template>
                 <template slot="start">
@@ -65,7 +65,24 @@
                 </div>
 
                 <div class="panel-block"> <!-- Table of all petitions -->
-                    <b-table :data="allPetitionsData" :columns="petitionColumns"></b-table>
+                    <b-table :data="this.allPetitionsData" paginated per-page="5" icon-prev="prevIcon"
+                             icon-next="nextIcon">
+                        <template slot-scope="props">
+                            <b-table-column field="button" label="" v-on:click="goToPetition(props.row.petitionId)">
+                                <b-button type="is-primary" outlined v-on:click="goToPetition(props.row.petitionId)">Details</b-button>
+                            </b-table-column>
+                            <b-table-column sortable field="petitionId" label="Petition ID" width="40" numeric>{{ props.row.petitionId }}</b-table-column>
+                            <b-table-column field="heroImage" label="Hero Image" width="100" height="100">
+                                <img :src="props.row.heroImage" alt="No Hero Image"/>
+                            </b-table-column>
+                            <b-table-column field="title" label="Title">{{ props.row.title }}</b-table-column>
+                            <b-table-column sortable field="category" label="Category">{{ props.row.category }}</b-table-column>
+                            <b-table-column sortable field="authorName" label="Author Name">{{ props.row.authorName }}</b-table-column>
+                            <b-table-column sortable field="signatureCount" label="Number of Signatures" width="40" numeric>{{ props.row.signatureCount}}</b-table-column>
+                        </template>
+                    </b-table>
+
+
                 </div>
             </b-collapse>
 
@@ -131,6 +148,7 @@
 </template>
 
 <style scoped>
+
     .panel-list {
         width: 90%;
         position: center;
@@ -156,6 +174,9 @@
         name: "Petitions",
         data () {
             return {
+                //for pagination
+                prevIcon : 'chevron-left',
+                nextIcon : 'chevron-right',
                 //for searching and sorting petitions
                 q: null,
                 categoryId: null,
@@ -191,15 +212,18 @@
                         field: 'petitionId',
                         label: 'Petition ID',
                         width: '40',
+                        centered: true,
                         numeric: true
                     },
                     {
                         field: 'title',
                         label: 'Title',
+                        centered: true
                     },
                     {
                         field: 'category',
                         label: 'Category',
+                        centered: true
                     },
                     {
                         field: 'authorName',
@@ -209,14 +233,19 @@
                     {
                         field: 'signatureCount',
                         label: 'Num of Signatures',
+                        centered: true
+                    },
+                    {
+                        field: 'heroImage',
+                        label: 'Hero Image'
                     }
                 ]
             }
 
         },
-        beforeMount() {
+        async created() {
             //get the data for the categories
-            server.get('api/v1/petitions/categories').then(response => {
+            await server.get('api/v1/petitions/categories').then(response => {
                 let i;
                 for (i = 0; i < response.data.length; i++) {
                     let newCategory = {
@@ -227,10 +256,11 @@
                 }
             }).catch(error => {
                 console.error(error);
-            })
+            });
+
 
             //get the data for the petitions columns
-            server.get('api/v1/petitions').then(response => {
+            await server.get('api/v1/petitions').then(response => {
                 let i;
                 for (i = 0; i < response.data.length; i++) {
                     let newPetition = {
@@ -238,16 +268,33 @@
                         'title' : response.data[i]['title'],
                         'category' : response.data[i]['category'],
                         'authorName' : response.data[i]['authorName'],
-                        'signatureCount' : response.data[i]['signatureCount']
+                        'signatureCount' : response.data[i]['signatureCount'],
+                        'heroImage' : 'Loading...'
                     };
                     this.allPetitionsData.push(newPetition);
                 }
-
             }).catch(error => {
                 console.error(error);
-            })
+            });
+            let petitionID;
+            let i = this.allPetitionsData.length-1;
+            for (petitionID=0; petitionID < i; petitionID++) {
+                await server.get('api/v1/petitions/'.concat(petitionID) + '/photo',
+                    {responseType : 'blob'})
+                    .then(response => {
+                        let reader = new FileReader();
+                        reader.readAsDataURL(response.data);
+                        this.allPetitionsData[petitionID]['heroImage'] = URL.createObjectURL(response.data);
+                    })
+                    .catch(error => {
+                        console.log(error)
+                    });
+            }
         },
         methods: {
+            goToPetition(id) {
+                this.$router.push(`/petitions/${id}`)
+            },
             goToPage(endpoint) {
                 this.$router.push(endpoint);
             },
