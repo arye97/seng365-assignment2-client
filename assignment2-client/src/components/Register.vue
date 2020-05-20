@@ -12,12 +12,24 @@
                         View Petitions
                     </b-navbar-item>
                 </template>
+                <template slot="end">
+                    <b-navbar-item tag="div">
+                        <div class="buttons">
+                            <a class="button is-primary">
+                                <strong>Sign up</strong>
+                            </a>
+                            <a class="button is-light">
+                                Log in
+                            </a>
+                        </div>
+                    </b-navbar-item>
+                </template>
             </b-navbar>
         </div>
     <section>
 
         <br/><br/>
-        <h1 class="text-center">Register for Petitions!</h1>
+        <h2 class="text-center">Register for Petitions!</h2>
         <b-field label="Name *">
             <b-input v-model="name" placeholder="Jeff Winger" required></b-input>
         </b-field>
@@ -55,6 +67,11 @@
 
 <style scoped>
 
+    h2 {
+        font-size: x-large;
+
+        text-align: center;
+    }
     section {
         position: relative;
         width: 60%;
