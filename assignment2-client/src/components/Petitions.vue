@@ -43,7 +43,10 @@
                 </div>
 
                 <div class="panel-block"> <!-- Table of all petitions -->
-                    <b-table :data="categoriesData" :columns="categoryColumns"></b-table>
+                    <b-table
+                            :data="categoriesData"
+                            :columns="categoryColumns">
+                    </b-table>
                 </div>
             </b-collapse>
 
@@ -65,20 +68,47 @@
                 </div>
 
                 <div class="panel-block"> <!-- Table of all petitions -->
-                    <b-table :data="this.allPetitionsData" paginated per-page="5" icon-prev="prevIcon"
-                             icon-next="nextIcon">
+                    <b-table :data="this.allPetitionsData" paginated per-page="5" >
                         <template slot-scope="props">
-                            <b-table-column field="button" label="" v-on:click="goToPetition(props.row.petitionId)">
-                                <b-button type="is-primary" outlined v-on:click="goToPetition(props.row.petitionId)">Details</b-button>
-                            </b-table-column>
-                            <b-table-column sortable field="petitionId" label="Petition ID" width="40" numeric>{{ props.row.petitionId }}</b-table-column>
-                            <b-table-column field="heroImage" label="Hero Image" width="100" height="100">
-                                <img :src="props.row.heroImage" alt="No Hero Image"/>
-                            </b-table-column>
-                            <b-table-column field="title" label="Title">{{ props.row.title }}</b-table-column>
-                            <b-table-column sortable field="category" label="Category">{{ props.row.category }}</b-table-column>
-                            <b-table-column sortable field="authorName" label="Author Name">{{ props.row.authorName }}</b-table-column>
-                            <b-table-column sortable field="signatureCount" label="Number of Signatures" width="40" numeric>{{ props.row.signatureCount}}</b-table-column>
+                            <template v-for="column in petitionColumns">
+
+
+                                <b-table-column :key="column.petitionId" v-bind="column" v-if="column.sortable" slot="sortable">
+                                    <template
+                                            v-if="column.searchable"
+                                            slot="searchable"
+                                            slot-scope="props"
+                                            >
+                                        <b-input
+                                                v-model="props.filters[props.column.field]"
+                                                placeholder="Search..."
+                                                icon="magnify"
+                                                size="is-small">
+                                        </b-input>
+                                    </template>
+                                    {{ props.row[column.field] }}
+                                </b-table-column>
+                                <b-table-column :key="column.petitionId" v-bind="column" v-else-if="column.isImage" slot="sortable">
+                                    <template>
+                                        <img :src="props.row.heroImage" height="100" width="100" alt="No Hero Image"/>
+                                    </template>
+                                </b-table-column>
+                                <b-table-column :key="column.petitionId" v-bind="column" v-else>
+                                    <template
+                                            v-if="column.searchable"
+                                            slot="searchable"
+                                            slot-scope="props"
+                                    >
+                                        <b-input
+                                                v-model="props.filters[props.column.field]"
+                                                placeholder="Search..."
+                                                icon="magnify"
+                                                size="is-small">
+                                        </b-input>
+                                    </template>
+                                    {{ props.row[column.field] }}
+                                </b-table-column>
+                            </template>
                         </template>
                     </b-table>
 
@@ -213,37 +243,43 @@
                         label: 'Petition ID',
                         width: '40',
                         centered: true,
-                        numeric: true
+                        numeric: true,
+                        sortable: true
+                    },
+                    {
+                        field: 'heroImage',
+                        label: 'Hero Image',
+                        isImage: true
                     },
                     {
                         field: 'title',
                         label: 'Title',
-                        centered: true
+                        centered: true,
+                        searchable: true
                     },
                     {
                         field: 'category',
                         label: 'Category',
-                        centered: true
+                        centered: true,
+                        sortable: true
                     },
                     {
                         field: 'authorName',
                         label: 'Author Name',
-                        centered: true
+                        centered: true,
+                        sortable: true
                     },
                     {
                         field: 'signatureCount',
                         label: 'Num of Signatures',
-                        centered: true
-                    },
-                    {
-                        field: 'heroImage',
-                        label: 'Hero Image'
+                        centered: true,
+                        sortable: true
                     }
                 ]
             }
 
         },
-        async created() {
+        async beforeMount() {
             //get the data for the categories
             await server.get('api/v1/petitions/categories').then(response => {
                 let i;
@@ -276,19 +312,19 @@
             }).catch(error => {
                 console.error(error);
             });
-            let petitionID;
-            let i = this.allPetitionsData.length-1;
-            for (petitionID=0; petitionID < i; petitionID++) {
+            let i = 0;
+
+            while (i < this.allPetitionsData.length) {
+                let petitionID = this.allPetitionsData[i]['petitionId'];
                 await server.get('api/v1/petitions/'.concat(petitionID) + '/photo',
                     {responseType : 'blob'})
                     .then(response => {
-                        let reader = new FileReader();
-                        reader.readAsDataURL(response.data);
-                        this.allPetitionsData[petitionID]['heroImage'] = URL.createObjectURL(response.data);
+                        this.allPetitionsData[i]['heroImage'] = URL.createObjectURL(response.data);
                     })
                     .catch(error => {
                         console.log(error)
                     });
+                i++;
             }
         },
         methods: {
