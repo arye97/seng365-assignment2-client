@@ -8,16 +8,30 @@
                     </b-navbar-item>
                 </template>
                 <template slot="start">
-                    <b-navbar-item v-on:click="goToPage('/profile')">
-                        My Profile
-                    </b-navbar-item>
+                    <template v-if="isLoggedIn">
+                        <b-navbar-item v-on:click="goToPage('/profile')">
+                            <h2>My Profile</h2>
+                        </b-navbar-item>
+                    </template>
                 </template>
 
-                <template slot="end">
+                <template slot="end" v-if="isLoggedIn">
                     <b-navbar-item tag="div">
                         <div class="buttons">
                             <a class="button is-primary" v-on:click="logout">
                                 <strong>Logout</strong>
+                            </a>
+                        </div>
+                    </b-navbar-item>
+                </template>
+                <template slot="end" v-else>
+                    <b-navbar-item tag="div">
+                        <div class="buttons">
+                            <a class="button is-primary" v-on:click="goToPage('/Register')">
+                                <strong>Sign up</strong>
+                            </a>
+                            <a class="button is-light" v-on:click="goToPage('/login')">
+                                Log in
                             </a>
                         </div>
                     </b-navbar-item>
@@ -143,7 +157,7 @@
 
             </b-collapse>
 
-        </section>
+        </section> <br/>
     </div>
 </template>
 
@@ -174,6 +188,7 @@
         name: "Petitions",
         data () {
             return {
+                isLoggedIn : (tokenStore.state.token !== null),
                 //for pagination
                 prevIcon : 'chevron-left',
                 nextIcon : 'chevron-right',
@@ -277,13 +292,11 @@
                 console.error(error);
             });
             let petitionID;
-            let i = this.allPetitionsData.length-1;
+            let i = this.allPetitionsData.length;
             for (petitionID=0; petitionID < i; petitionID++) {
                 await server.get('api/v1/petitions/'.concat(petitionID) + '/photo',
                     {responseType : 'blob'})
                     .then(response => {
-                        let reader = new FileReader();
-                        reader.readAsDataURL(response.data);
                         this.allPetitionsData[petitionID]['heroImage'] = URL.createObjectURL(response.data);
                     })
                     .catch(error => {

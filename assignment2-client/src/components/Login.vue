@@ -12,6 +12,18 @@
                         View Petitions
                     </b-navbar-item>
                 </template>
+                <template slot="end">
+                    <b-navbar-item tag="div">
+                        <div class="buttons">
+                            <a class="button is-primary" v-on:click="goToPage('/Register')">
+                                <strong>Sign up</strong>
+                            </a>
+                            <a class="button is-light" v-on:click="goToPage('/login')">
+                                Log in
+                            </a>
+                        </div>
+                    </b-navbar-item>
+                </template>
             </b-navbar>
         </div>
         <section><br/><br/><br/>

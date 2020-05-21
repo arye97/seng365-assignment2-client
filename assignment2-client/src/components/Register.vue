@@ -15,10 +15,10 @@
                 <template slot="end">
                     <b-navbar-item tag="div">
                         <div class="buttons">
-                            <a class="button is-primary">
+                            <a class="button is-primary" v-on:click="goToPage('/Register')">
                                 <strong>Sign up</strong>
                             </a>
-                            <a class="button is-light">
+                            <a class="button is-light" v-on:click="goToPage('/login')">
                                 Log in
                             </a>
                         </div>

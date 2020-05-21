@@ -14,6 +14,9 @@
                 <b-navbar-item v-on:click="goToPage('/petitions')">
                     View Petitions
                 </b-navbar-item>
+                <b-navbar-item v-on:click="goToPage('/petitions/create')">
+                    Create Petition
+                </b-navbar-item>
             </template>
 
             <template slot="end">

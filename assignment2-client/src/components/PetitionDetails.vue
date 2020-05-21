@@ -8,7 +8,7 @@
                     </b-navbar-item>
                 </template>
                 <template slot="start">
-                    <b-navbar-item v-on:click="goToPage('/profile/edit')">
+                    <b-navbar-item  v-if="this.isLoggedIn" v-on:click="goToPage('/profile/edit')">
                         Edit Profile
                     </b-navbar-item>
                     <b-navbar-item v-on:click="goToPage('/petitions')">
@@ -16,7 +16,7 @@
                     </b-navbar-item>
                 </template>
 
-                <template slot="end">
+                <template slot="end" v-if="this.isLoggedIn">
                     <b-navbar-item tag="div">
                         <div class="buttons">
                             <a class="button is-primary" v-on:click="logout">
@@ -31,12 +31,14 @@
         <br/><br/>
         <section>
             <div class="container">
+                Petition Details: <br/>
                 <div class="notification text-center">
                     Petition Details: <br/>
                     Petition ID: {{this.petitionId}}<br/>
                     Name: {{this.petition.title}}<br/>
-                    Description: {{this.petition.desc}}<br/>
-                    Author: {{this.petition.author}}<br/> <!--put in a table for author details-->
+                    Description: <br/>{{this.petition.description}}<br/><br/>
+                    Author: {{this.petition.authorName}}<br/> <!--put in a table for author details-->
+
                     <!--Need also, HERO IMAGE, NUM SIGNATURES,
                     CATEGORY, CREATED DATE, CLOSING DATE, LIST OF SIGNATORIES-->
 
@@ -51,11 +53,12 @@
     import server from "../Api";
     import {tokenStore} from "../main";
     export default {
-        name: "Profile",
+        name: "PetitionDetails",
         data() {
             return {
                 //have petitionId start off as the full url pathname
-                petitionId: window.location.pathname,
+                isLoggedIn : (tokenStore.state.token !== null),
+                petitionId: null,
                 //for buefy functionality
                 profileViewing: "petition-profile",
                 open: true,
@@ -79,13 +82,7 @@
                 }
             }).catch(error => {
                 console.error(error);
-                tokenStore.setUserId(null);
-                tokenStore.setToken(null);
-                this.$router.push('/login');
             })
-
-
-
         },
         methods: {
             goToPage(endpoint) {

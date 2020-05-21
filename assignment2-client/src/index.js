@@ -6,8 +6,8 @@ import UserProfile from './components/Profile'
 import About from './components/About'
 import Petitions from './components/Petitions'
 import EditProfile from './components/EditProfile'
-
-
+import PetitionDetails from './components/PetitionDetails'
+import CreatePetition from "./components/CreatePetition";
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 Vue.use(Router);
 Vue.use(BootstrapVue);
@@ -23,6 +23,9 @@ export default new Router({
         {path: '/about', component: About},
         {path: '/petitions', component: Petitions},
         {path: '/profile/edit', component: EditProfile},
+        {path: '/petitions/create', component: CreatePetition},
+        {path: '/petitions/:id', component: PetitionDetails},
+
         // otherwise redirect to home
         { path: '*', redirect: '/login' }
     ]
