@@ -55,6 +55,19 @@
                      placeholder="New Zealand">
             </b-input>
         </b-field>
+        <b-field label="Upload a Hero Image"></b-field>
+        <b-field  class="file">
+            <b-upload v-model="heroImage">
+                <a class="button is-primary">
+                    <b-icon icon="upload"></b-icon>
+                    <span>Click to upload</span>
+                </a>
+            </b-upload>
+            <span class="file-name" v-if="heroImage">
+                                    {{ heroImage.name }}
+                                </span>
+        </b-field>
+
         <b-field label="Fields marked * are required!"></b-field>
         <b-field class="buttons">
             <b-button type="is-primary" v-on:click="registerUser">Register</b-button>
@@ -93,7 +106,8 @@
                 email: '',
                 password: null,
                 country: null,
-                city: null
+                city: null,
+                heroImage: null
             }
         },
         methods: {
@@ -107,7 +121,8 @@
                     email: this.email.trim(),
                     password: this.password.trim(),
                     country: this.country.trim(),
-                    city: this.city.trim()
+                    city: this.city.trim(),
+                    heroImage: "Loading..."
                 };
 
                 // The HTTP Post Request
@@ -116,15 +131,30 @@
                     {
                         headers: {"content-type": "application/json"}
                     }
-                ).then(response => { //If successfully registered the response will have a status of 201
+                ).then(async response => { //If successfully registered the response will have a status of 201
                     if (response.status === 201) {
                         console.log('User Registered Successfully!');
-                        tokenStore.setToken(response.data['token']);
-                        this.$router.push('/profile'); //Routes to profile on successful register
+                        await tokenStore.setToken(response.data['token']);
+                        await tokenStore.setUserId(response.data['userId']);
+                        await this.$router.push('/profile'); //Routes to profile on successful register
                     }
                 }).catch(error => {
                     console.error(error);
                 });
+
+                let userId = tokenStore.state.userId;
+                let token = tokenStore.state.userId;
+                await server.put(`/api/v1/users/${userId}/photo`, {headers: {
+                    "Content-Type" : "image/jpeg",
+                    "X-Authorization" : token,
+                    }
+                }).then(response => {
+                    console.log("Hero Image Set!")
+                    response.resolve();
+                }).catch(error => {
+                    console.error(error);
+                });
+
             }
         }
     }

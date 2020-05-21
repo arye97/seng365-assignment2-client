@@ -57,7 +57,7 @@
         data() {
             return {
                 //have petitionId start off as the full url pathname
-                isLoggedIn : (tokenStore.state.token !== null),
+                isLoggedIn: (tokenStore !== undefined),
                 petitionId: null,
                 //for buefy functionality
                 profileViewing: "petition-profile",
@@ -70,7 +70,7 @@
 
             };
         },
-        mounted() {
+        beforeMount() {
             let url = window.location.pathname;
             this.petitionId = url.substring(url.lastIndexOf('/') + 1);
             server.get('/api/v1/petitions/'.concat(this.petitionId)).then(response => {

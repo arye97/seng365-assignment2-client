@@ -55,13 +55,35 @@
                                     </option>
                                 </b-select>
                             </b-field>
-
-                            <b-field label="Closing Date">
-                                <b-datetimepicker
-                                        v-model="closingDate"
-                                        placeholder="Type or select a date..."
-                                        icon="calendar-today"
-                                        editable>
+                            <b-field label="Upload a Hero Image"></b-field>
+                            <b-field  class="file">
+                                <b-upload v-model="heroImage">
+                                    <a class="button is-primary">
+                                        <b-icon icon="upload"></b-icon>
+                                        <span>Click to upload</span>
+                                    </a>
+                                </b-upload>
+                                <span class="file-name" v-if="heroImage">
+                                    {{ heroImage.name }}
+                                </span>
+                            </b-field>
+                            <b-field label="Select Closing Date and Time">
+                                <b-datetimepicker v-model="closingDate"
+                                                  placeholder="Click to select...">
+                                    <template slot="left">
+                                        <button class="button is-primary"
+                                                @click="closingDate = new Date()">
+                                            <b-icon icon="clock"></b-icon>
+                                            <span>Now</span>
+                                        </button>
+                                    </template>
+                                    <template slot="right">
+                                        <button class="button is-danger"
+                                                @click="closingDate = null">
+                                            <b-icon icon="close"></b-icon>
+                                            <span>Clear</span>
+                                        </button>
+                                    </template>
                                 </b-datetimepicker>
                             </b-field>
 
@@ -83,10 +105,11 @@
         data() {
             return {
                 //for updating user details
+                petitionId: null,
                 title: null,
                 description: null,
                 categoryId: null,
-                closingDate: null,
+                closingDate: new Date().getUTCDate,
                 heroImage: null,
                 categories: [],
                 //for buefy functionality
@@ -119,7 +142,48 @@
             goToPage(endpoint) {
                 this.$router.push(endpoint);
             },
-            createPetition() {},
+            validateImageType(photo) {
+                if (photo === null) {return false}
+                let validTypes = ["image/jpeg", "image/gif", "image/png"];
+                if (!validTypes.includes(photo.type)) {
+                    this.$refs['file-input'].reset;
+                }
+                return true
+            },
+            async createPetition() {
+
+                let newPetition = {
+                    "title": this.title,
+                    "description": this.description,
+                    "categoryId": this.categoryId.categoryId,
+                    "closingDate": this.closingDate,
+                    "heroImage": "No hero image!"
+                };
+                console.log(newPetition);
+                //create basic petition
+
+                await server.post('/api/v1/petitions', newPetition,
+                    {headers: {"content-type": "application/json", 'X-Authorization': tokenStore.state.token}
+                }).then(response => {
+                    this.petitionId = response.data.petitionId;
+                    this.goToPage(`/petitions/${this.petitionId}`);
+                }).catch(error => {
+                    console.error(error);
+                });
+
+                if (this.validateImageType(this.heroImage)) {
+                    await server.put(`/api/v1/petitions/${this.petitionId}/photo`,
+                        this.heroImage,
+                        {headers: {"content-type": this.heroImage.type, 'X-Authorization': tokenStore.state.token}
+                        }).then(response => {
+                        console.log(response);
+                        response.resolve();
+                    })
+                        .catch(error => {
+                            console.error(error)
+                        });
+                }
+            },
             async logout() {
                 await server.post('/api/v1/users/logout', null,
                     {headers: {"content-type": "application/json", 'X-Authorization': tokenStore.state.token}

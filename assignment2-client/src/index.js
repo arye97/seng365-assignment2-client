@@ -22,9 +22,11 @@ export default new Router({
         {path: '/profile', component: UserProfile},
         {path: '/about', component: About},
         {path: '/petitions', component: Petitions},
+
         {path: '/profile/edit', component: EditProfile},
         {path: '/petitions/create', component: CreatePetition},
         {path: '/petitions/:id', component: PetitionDetails},
+
 
         // otherwise redirect to home
         { path: '*', redirect: '/login' }
