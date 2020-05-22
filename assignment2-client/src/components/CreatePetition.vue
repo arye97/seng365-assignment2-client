@@ -194,7 +194,6 @@
                         {headers: {"content-type": this.heroImage.type, 'X-Authorization': tokenStore.state.token}
                         }).then(response => {
                         console.log(response);
-                        response.resolve();
                     })
                         .catch(error => {
                             console.error(error)

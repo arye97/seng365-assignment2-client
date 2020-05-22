@@ -279,7 +279,8 @@
                         field: 'title',
                         label: 'Title',
                         centered: true,
-                        searchable: true
+                        searchable: true,
+                        sortable: true
                     },
                     {
                         field: 'category',

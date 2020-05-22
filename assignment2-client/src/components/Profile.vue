@@ -48,8 +48,8 @@
                 <div class="text-center" v-if="this.user.email">
                     Email: {{this.user.email}}<br/>
                 </div>
-                <div class="text-center" v-if="this.heroImage">
-                    Hero Image: <img :src="this.heroImage" height="100" width="100" alt="No Hero Image" /><br/>
+                <div class="text-center">
+                    Hero Image: <img :src="this.heroImage" alt="No Hero Image" /><br/>
                 </div>
             </div>
 

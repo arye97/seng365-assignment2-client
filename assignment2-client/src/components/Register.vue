@@ -140,31 +140,45 @@
                         headers: {"content-type": "application/json"}
                     }
                 ).then(async response => { //If successfully registered the response will have a status of 201
-                    if (response.status === 201) {
-                        console.log('User Registered Successfully!');
-                        await tokenStore.setToken(response.data['token']);
-                        await tokenStore.setUserId(response.data['userId']);
-                        await this.$router.push('/profile'); //Routes to profile on successful register
-                    }
+                    console.log('User Registered Successfully!');
+                    console.log(response.data);
+                    await tokenStore.setUserId(response.data['userId']);
                 }).catch(error => {
                     console.error(error);
                 });
+                await server.post('/api/v1/users/login',
+                    {email: this.email.trim(), password: this.password.trim()},
+                    {
+                        headers: {"content-type": "application/json"}
+                    }
+                ).then(response => { //If successfully logged the response will have a status of 201
+                    if (response.status === 200) {
+                        console.log('User Logged In Successfully!');
+                        tokenStore.setToken(response.data['token']);
+                        tokenStore.setUserId(response.data['userId']);
+                    } else {
+                        console.log(response.status);
+                    }
+                }).catch(error => { //If an error occurs during login (includes server side errors)
+                    console.log(error);
+                });
 
                 let userId = tokenStore.state.userId;
-                let token = tokenStore.state.userId;
+                let token = tokenStore.state.token;
+                console.log(userId, token);
                 if (this.validateImageType(this.heroImage)) {
-                    await server.put(`/api/v1/users/${userId}/photo`, {
-                        headers: {
-                            "Content-Type": this.heroImage.type,
-                            "X-Authorization": token,
-                        }
-                    }).then(response => {
-                        console.log("Hero Image Set!")
-                        response.resolve();
-                    }).catch(error => {
-                        console.error(error);
-                    });
+                    await server.put(`/api/v1/users/${userId}/photo`,
+                        this.heroImage,
+                        {headers: {"content-type": this.heroImage.type, 'X-Authorization': tokenStore.state.token}
+                        }).then(response => {
+                        console.log(response);
+                    })
+                        .catch(error => {
+                            console.error(error)
+                        });
                 }
+
+                await this.$router.push("/profile"); //Route to profile screen on successful login
             }
         }
     }
