@@ -8,6 +8,9 @@
                     </b-navbar-item>
                 </template>
                 <template slot="start">
+                    <b-navbar-item  v-if="this.isLoggedIn" v-on:click="goToPage('/profile')">
+                        My Profile
+                    </b-navbar-item>
                     <b-navbar-item  v-if="this.isLoggedIn" v-on:click="goToPage('/profile/edit')">
                         Edit Profile
                     </b-navbar-item>
@@ -33,12 +36,23 @@
             <div class="container">
                 Petition Details: <br/>
                 <div class="notification text-center">
-                    Petition Details: <br/>
-                    Petition ID: {{this.petitionId}}<br/>
-                    Name: {{this.petition.title}}<br/>
-                    Description: <br/>{{this.petition.description}}<br/><br/>
-                    Author: {{this.petition.authorName}}<br/> <!--put in a table for author details-->
-
+                    <strong>Petition Details:</strong> <hr/>
+                    <strong>Petition ID:</strong> {{this.petitionId}}<br/>
+                    <strong>Petition Author Details:</strong>
+                    <template>
+                        <b-table :data="authorData" :columns="authorColumns"></b-table>
+                    </template><hr/>
+                    <strong>Name:</strong> {{this.petition.title}}<hr/>
+                    <strong>Description:</strong> <br/>{{this.petition.description}}<br/><br/>
+                    <strong>Signature Count:</strong> <br/> {{this.petition.signatureCount}}<br/><br/>
+                    <strong>Created Date:</strong> <br/>{{this.petition.createdDate}}<br/><br/>
+                    <strong>Closing Date:</strong> <br/>{{this.petition.closingDate}}<br/><br/>
+                    <Strong>Hero Image:</strong><br/>
+                        <img :src="this.heroImage" alt="No Hero Image"/>
+                    <hr/>
+                    <template>
+                        <b-table :data="signatoryData" :columns="signatoryColumns"></b-table>
+                    </template><hr/>
                     <!--Need also, HERO IMAGE, NUM SIGNATURES,
                     CATEGORY, CREATED DATE, CLOSING DATE, LIST OF SIGNATORIES-->
 
@@ -56,6 +70,63 @@
         name: "PetitionDetails",
         data() {
             return {
+                authorData: [],
+                authorColumns: [
+                    {
+                        field: 'name',
+                        label: 'Author Name',
+                        centered: true
+                    },
+                    {
+                        field: 'heroImage',
+                        label: 'Hero Image',
+                        centered: true,
+                        value: "No Image Provided"
+                    },
+                    {
+                        field: 'city',
+                        label: 'City',
+                        centered: true,
+                        value: "No City Provided"
+                    },
+                    {
+                        field: 'country',
+                        label: 'Country',
+                        centered: true,
+                        value: "No Country Provided"
+                    }
+                ],
+
+                signatoryData: [],
+                signatoryColumns: [
+                    {
+                        field: 'signatoryId',
+                        label: 'Signatory ID',
+                        width: '40',
+                        numeric: true,
+                        centered: true
+                    },
+                    {
+                        field: 'name',
+                        label: 'Name',
+                        centered: true
+                    },
+                    {
+                        field: 'city',
+                        label: 'City',
+                        centered: true
+                    },
+                    {
+                        field: 'country',
+                        label: 'Country',
+                        centered: true
+                    },
+                    {
+                        field: 'signedDate',
+                        label: 'Date Signed',
+                        centered: true
+                    }
+                ],
                 //have petitionId start off as the full url pathname
                 isLoggedIn: (tokenStore !== undefined),
                 petitionId: null,
@@ -64,16 +135,17 @@
                 open: true,
                 fullheight: true,
                 toUpdate: false,
-
+                heroImage: null,
                 //get user data here
                 petition: null
 
             };
         },
-        beforeMount() {
+        async mounted() {
+            this.userId = tokenStore.state.userId;
             let url = window.location.pathname;
             this.petitionId = url.substring(url.lastIndexOf('/') + 1);
-            server.get('/api/v1/petitions/'.concat(this.petitionId)).then(response => {
+            await server.get('/api/v1/petitions/'.concat(this.petitionId)).then(response => {
                 if (response.status === 200) {
                     this.petition = response.data;
                     console.log(response.data);
@@ -82,7 +154,34 @@
                 }
             }).catch(error => {
                 console.error(error);
-            })
+            });
+
+            await server.get(`/api/v1/petitions/${this.petitionId}/photo`, {responseType : 'blob'}).then(response => {
+                console.log(response.data);
+                this.heroImage = URL.createObjectURL(response.data);
+                console.log(response.data.heroImage);
+            }).catch(error => {console.error(error)});
+
+            await server.get(`/api/v1/petitions/${this.petitionId}/signatures`)
+                .then(response => {
+                    console.log(response.data);
+                    this.signatoryData = response.data
+                }).catch(error => {
+                    console.error(error);
+            });
+            console.log(this.petition.authorId);
+
+            await server.get(`/api/v1/users/${this.petition.authorId}`)
+                .then(response => {
+                    console.log(response.data);
+                    if (response.data.heroImage === null) {
+                        response.data.push({"heroImage": "No Profile Image"});
+                    }
+                    this.authorData.push(response.data);
+
+                }).catch(error => {
+                console.error(error);
+            });
         },
         methods: {
             goToPage(endpoint) {

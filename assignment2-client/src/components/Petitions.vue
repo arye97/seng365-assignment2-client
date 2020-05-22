@@ -12,8 +12,12 @@
                         <b-navbar-item v-on:click="goToPage('/profile')">
                             <h2>My Profile</h2>
                         </b-navbar-item>
+                        <b-navbar-item  v-if="this.isLoggedIn" v-on:click="goToPage('/profile/edit')">
+                            Edit Profile
+                        </b-navbar-item>
                     </template>
                 </template>
+
 
                 <template slot="end" v-if="isLoggedIn">
                     <b-navbar-item tag="div">
@@ -82,8 +86,11 @@
                 </div>
 
                 <div class="panel-block"> <!-- Table of all petitions -->
-                    <b-table :data="this.allPetitionsData" paginated per-page="5" >
+                    <b-table :data="this.allPetitionsData" paginated per-page="10" >
                         <template slot-scope="props">
+                            <b-table-column :key="props.row.petitionId" v-bind="props.row">
+                                <b-button v-bind="props.row"  :key="props.row.petitionId" v-on:click="goToPetition(props.row.petitionId)">Open</b-button>
+                            </b-table-column>
                             <template v-for="column in petitionColumns">
 
 
@@ -132,6 +139,7 @@
 
         </section>
         <br/>
+        <!--
         <section class="petitionTable">
             <br/>
             <b-collapse
@@ -147,7 +155,7 @@
                     <strong>Sort and Search Petitions</strong>
                 </div>
                 <div class="panel-block">
-                    <div class="panel-list"> <!-- Search for a petition, or sort them -->
+                    <div class="panel-list">
                         <br/>
                         <b-field label="Keyword">
                             <b-input v-model="q" placeholder="e.g: the"></b-input>
@@ -188,6 +196,7 @@
             </b-collapse>
 
         </section> <br/>
+         -->
     </div>
 </template>
 
@@ -235,7 +244,7 @@
                 sortBy: null,
 
                 //for displaying data
-                allPetitionsIsOpen: false,
+                allPetitionsIsOpen: true,
                 isOpen: false,
                 searchPetitionsIsOpen: false,
                 allPetitionsData: [],

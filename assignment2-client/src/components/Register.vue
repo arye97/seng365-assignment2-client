@@ -114,6 +114,14 @@
             goToPage(page) {
                 this.$router.push(page);
             },
+            validateImageType(photo) {
+                if (photo === null) {return false}
+                let validTypes = ["image/jpeg", "image/gif", "image/png"];
+                if (!validTypes.includes(photo.type)) {
+                    this.$refs['file-input'].reset;
+                }
+                return true
+            },
             async registerUser() {
                 // Save the data as a newUser object
                 const newUser = {
@@ -144,17 +152,19 @@
 
                 let userId = tokenStore.state.userId;
                 let token = tokenStore.state.userId;
-                await server.put(`/api/v1/users/${userId}/photo`, {headers: {
-                    "Content-Type" : "image/jpeg",
-                    "X-Authorization" : token,
-                    }
-                }).then(response => {
-                    console.log("Hero Image Set!")
-                    response.resolve();
-                }).catch(error => {
-                    console.error(error);
-                });
-
+                if (this.validateImageType(this.heroImage)) {
+                    await server.put(`/api/v1/users/${userId}/photo`, {
+                        headers: {
+                            "Content-Type": this.heroImage.type,
+                            "X-Authorization": token,
+                        }
+                    }).then(response => {
+                        console.log("Hero Image Set!")
+                        response.resolve();
+                    }).catch(error => {
+                        console.error(error);
+                    });
+                }
             }
         }
     }

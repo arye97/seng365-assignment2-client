@@ -11,9 +11,13 @@
                     <b-navbar-item v-on:click="goToPage('/profile')">
                         My Profile
                     </b-navbar-item>
+                    <b-navbar-item  v-if="this.isLoggedIn" v-on:click="goToPage('/profile/edit')">
+                        Edit Profile
+                    </b-navbar-item>
                     <b-navbar-item v-on:click="goToPage('/petitions')">
                         View Petitions
                     </b-navbar-item>
+
                 </template>
                 <template slot="end">
                     <b-navbar-item tag="div">
@@ -72,7 +76,7 @@
                                                   placeholder="Click to select...">
                                     <template slot="left">
                                         <button class="button is-primary"
-                                                @click="closingDate = new Date()">
+                                                @click="closingDate = new Date().getUTCDate">
                                             <b-icon icon="clock"></b-icon>
                                             <span>Now</span>
                                         </button>
@@ -105,6 +109,7 @@
         data() {
             return {
                 //for updating user details
+                isLoggedIn: (tokenStore !== undefined),
                 petitionId: null,
                 title: null,
                 description: null,
@@ -150,13 +155,25 @@
                 }
                 return true
             },
+
+            async signPetition() {
+                await server.post(`/api/v1/petitions/${this.petitionId}/signatures`, null,
+                    {headers: {'X-Authorization': tokenStore.state.token}})
+                    .then(response => {
+                        console.log(response);
+                        console.log("Petition Signed");
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            },
             async createPetition() {
 
                 let newPetition = {
                     "title": this.title,
                     "description": this.description,
                     "categoryId": this.categoryId.categoryId,
-                    "closingDate": this.closingDate,
+                    "closingDate": this.closingDate.getUTCDate,
                     "heroImage": "No hero image!"
                 };
                 console.log(newPetition);
@@ -183,6 +200,7 @@
                             console.error(error)
                         });
                 }
+                this.signPetition();
             },
             async logout() {
                 await server.post('/api/v1/users/logout', null,

@@ -48,6 +48,9 @@
                 <div class="text-center" v-if="this.user.email">
                     Email: {{this.user.email}}<br/>
                 </div>
+                <div class="text-center" v-if="this.heroImage">
+                    Hero Image: <img :src="this.heroImage" height="100" width="100" alt="No Hero Image" /><br/>
+                </div>
             </div>
 
         </div>
@@ -68,18 +71,15 @@
                 open: true,
                 fullheight: true,
                 toUpdate: false,
-
                 //get user data here
-                user: null
-
+                user: null,
+                heroImage: null
             };
         },
         mounted() {
 
             if (tokenStore === undefined) { //then there's no stored token
                 this.$router.push('/'); //routes back to login
-            } else {
-                console.log(tokenStore.state.token, tokenStore.state.userId)
             }
             //get user details
 
@@ -88,7 +88,6 @@
                 }).then(response => {
                     if (response.status === 200) {
                         this.user = response.data;
-                        console.log(response.data);
                     } else {
                         console.log(response);
                     }
@@ -99,7 +98,13 @@
                 this.$router.push('/login');
             })
 
-
+            server.get(`/api/v1/users/${tokenStore.state.userId}/photo`,
+                {responseType : 'blob', headers: {'X-Authorization' : tokenStore.state.token}})
+                .then(response => {
+                    console.log(response.data);
+                    this.heroImage = URL.createObjectURL(response.data);
+                    console.log(response.data.heroImage);
+            }).catch(error => {console.error(error)});
 
         },
         methods: {
