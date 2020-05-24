@@ -42,7 +42,7 @@
                     <div class="notification">
                         <div class="content">
 
-                            <section>
+                            <section >
                                 <b-field label="Name">
                                     <b-input v-model="name" placeholder="Barry Berkman"></b-input>
                                 </b-field>
@@ -52,11 +52,11 @@
                                 </b-field>
 
                                 <b-field label="New Password">
-                                    <b-input v-model="password" placeholder="Your new password" ></b-input>
+                                    <b-input type="password" v-model="password" placeholder="Your new password" ></b-input>
                                 </b-field>
 
                                 <b-field label="Current Password">
-                                    <b-input v-model="currentPassword" placeholder="Your current password"></b-input>
+                                    <b-input type="password" v-model="currentPassword" placeholder="Your current password"></b-input>
                                 </b-field>
 
                                 <b-field label="City">
@@ -65,7 +65,18 @@
                                              placeholder="Christchurch">
                                     </b-input>
                                 </b-field>
-
+                                <b-field label="Set a new profile photo"></b-field>
+                                <b-field class="file">
+                                    <b-upload v-model="heroImage">
+                                        <a class="button is-primary"><br/><br/>
+                                            <b-icon icon="upload"></b-icon>
+                                            <span>Click to upload</span>
+                                        </a>
+                                    </b-upload>
+                                    <span class="file-name" v-if="heroImage">
+                                    {{ heroImage.name }}
+                                </span>
+                                </b-field>
                                 <b-field label="Country">
                                     <b-input type="text"
                                              v-model="country"
@@ -96,6 +107,7 @@
                 city: null,
                 password: null,
                 currentPassword: null,
+                heroImage: null,
                 updatedDetails: {},
                 //for buefy functionality
                 profileViewing: "user-profile",
@@ -113,6 +125,14 @@
             goToPage(endpoint) {
                 this.$router.push(endpoint);
             },
+            validateImageType(photo) {
+                if (photo === null) {return false}
+                let validTypes = ["image/jpeg", "image/gif", "image/png"];
+                if (!validTypes.includes(photo.type)) {
+                    this.$refs['file-input'].reset;
+                }
+                return true
+            },
             async updateDetails () {
 
                 let token = sessionStorage.getItem('token');
@@ -123,18 +143,39 @@
                 if (this.currentPassword !== null) {this.updatedDetails['currentPassword'] = this.currentPassword}
                 if (this.city !== null) {this.updatedDetails['city'] = this.city}
                 if (this.country !== null) {this.updatedDetails['country'] = this.country}
-                await server.patch('/api/v1/users/'.concat(userId), this.updatedDetails,
-                    {headers: {"content-type": "application/json", 'X-Authorization': token}}
-                ).then(response => {
-                    console.log(response);
-                    this.toUpdate = true;
-                    this.$buefy.snackbar.open({position: "is-bottom" ,message: `User details saved successfully`, duration: 5000, type: "is-success"});
-                    this.$router.push('/profile');
-                }).catch(error => {
-                    console.error(error);
-                    this.$buefy.snackbar.open({message: `Error saving changes, could not update`, duration: 5000, type: "is-danger"});
 
-                })
+
+                if ((this.password === null && this.currentPassword !== null) || (this.currentPassword === null && this.password !== null)) {
+                    this.$buefy.snackbar.open({message: `Both password fields must be filled in, not just one!`, duration: 2500, type: "is-danger"});
+                    return;
+                }
+                if (this.updatedDetails.length > 0) {
+                    await server.patch('/api/v1/users/'.concat(userId), this.updatedDetails,
+                        {headers: {"content-type": "application/json", 'X-Authorization': token}}
+                    ).then(response => {
+                        console.log(response);
+                        this.toUpdate = true;
+                        this.$buefy.snackbar.open({position: "is-bottom" ,message: `User details saved successfully`, duration: 5000, type: "is-success"});
+                        this.$router.push('/profile');
+                    }).catch(error => {
+                        console.error(error);
+                        this.$buefy.snackbar.open({message: `Error saving changes, could not update`, duration: 2500, type: "is-danger"});
+                    });
+                }
+                if (this.validateImageType(this.heroImage)) {
+                    await server.put(`/api/v1/users/${userId}/photo`,
+                        this.heroImage,
+                        {headers: {"content-type": this.heroImage.type, 'X-Authorization': token}
+                        }).then(response => {
+                        this.$buefy.snackbar.open({position: "is-bottom-left" ,message: `User profile image saved successfully`, duration: 5000, type: "is-success"});
+                        console.log(response);
+                    })
+                        .catch(error => {
+                            console.error(error)
+                            this.$buefy.snackbar.open({message: `Error saving profile photo`, duration: 2500, type: "is-danger"});
+                        });
+                }
+                await server.put
             },
             async logout() {
                 let token = sessionStorage.getItem('token');

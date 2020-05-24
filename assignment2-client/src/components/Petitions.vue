@@ -305,8 +305,8 @@
                 console.error(error);
                 this.$buefy.snackbar.open({message: `Could not retrieve petition information, try again later`, duration: 5000, type: "is-danger"});
             });
-            let i = 0;
 
+            let i = 0;
             while (i < this.allPetitionsData.length) {
                 let petitionID = this.allPetitionsData[i]['petitionId'];
                 await server.get('api/v1/petitions/'.concat(petitionID) + '/photo',

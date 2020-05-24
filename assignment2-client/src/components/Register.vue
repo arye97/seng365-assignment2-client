@@ -144,7 +144,7 @@
                     this.$buefy.snackbar.open({position: "is-bottom" ,message: `Registered successfully`, duration: 5000, type: "is-success"});
                 }).catch(error => {
                     console.error(error);
-                    this.$buefy.snackbar.open({message: `Error has occurred during registration, try again later`, duration: 5000, type: "is-danger"});
+                    this.$buefy.snackbar.open({position: "is-bottom" , message: `Error has occurred during registration, try again later`, duration: 5000, type: "is-danger"});
                 });
                 await server.post('/api/v1/users/login',
                     {email: this.email.trim(), password: this.password.trim()},

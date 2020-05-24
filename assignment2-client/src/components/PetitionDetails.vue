@@ -73,15 +73,29 @@
                         <strong>Sign Petition</strong>
                     </a><br/><br/>
                     <strong>Signature Count:</strong> <br/> {{this.petition.signatureCount}}<br/><br/>
-                    <template >
-                        <b-table :data="signatoryData" :columns="signatoryColumns"></b-table>
+
+                    <template>
+                        <b-table :data="signatoryData">
+                            <template slot-scope="props">
+                                <template v-for="column in signatoryColumns">
+                                    <b-table-column :key="column.name" v-if="column.isImage" v-bind="column">
+                                        <template>
+                                            <img :src="props.row.signatoryId" height="100" width="100" alt="No Hero Image"/>
+                                        </template>
+                                    </b-table-column>
+                                    <b-table-column v-else :key="column.name" v-bind="column">
+                                        {{ props.row[column.field] }}
+                                    </b-table-column>
+                                </template>
+                            </template>
+                        </b-table>
                     </template><hr/>
+
+
                     <b-button v-if="isMyPetition" type="is-danger"
                               icon-right="delete">
                         Delete
                     </b-button>
-                    <!--Need also, HERO IMAGE, NUM SIGNATURES,
-                    CATEGORY, CREATED DATE, CLOSING DATE, LIST OF SIGNATORIES-->
 
                 </div>
 
@@ -136,7 +150,8 @@
                     {
                         field: 'profileImage',
                         label: 'Profile Image',
-                        centered: true
+                        centered: true,
+                        isImage: true
                     },
                     {
                         field: 'name',
@@ -209,17 +224,6 @@
                     console.error(error);
                 });
 
-            //need to get signatories user profile pictures too urgh
-            let i;
-            for (i=0; i<this.signatoryData.length; i++) {
-                await server.get(`/api/v1/users/${this.signatoryData[0].signatoryId}/photo`, {responseType : 'blob'})
-                    .then(response => {
-                        console.log(response);
-                    }).catch(error => {
-                        console.error(error);
-                    });
-            }
-
 
             await server.get(`/api/v1/users/${this.petition.authorId}`)
                 .then(response => {
@@ -234,6 +238,21 @@
                 }).catch(error => {
                     console.error(error);
                 });
+            //need to get signatories user profile pictures too urgh
+            let j = 0;
+            while (j < this.signatoryData.length) {
+                let signerId = this.signatoryData[j]['signatoryId'];
+                await server.get('api/v1/petitions/'.concat(signerId) + '/photo',
+                    {responseType : 'blob'})
+                    .then(response => {
+                        this.signatoryData[j]['profileImage'] = URL.createObjectURL(response.data);
+                    })
+                    .catch(error => {
+                        console.log(error)
+                    });
+                j++;
+            }
+            console.log(this.signatoryData);
 
             await server.get(`/api/v1/users/${this.petition.authorId}/photo`, {responseType : 'blob'})
                 .then(response => {
@@ -251,6 +270,7 @@
             async signPetition() {
                 let token = sessionStorage.getItem('token');
                 if (token === null) {
+                    this.$buefy.snackbar.open({position: "is-bottom" ,message: `You must be logged in to sign a petititon!`, duration: 5000, type: "is-danger"});
                     this.goToPage('/login');
                 }
                 await server.post(`/api/v1/petitions/${this.petitionId}/signatures`, null,

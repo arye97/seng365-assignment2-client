@@ -38,7 +38,7 @@
                 Welcome to your Petitions Account <strong> {{this.user.name}} </strong>
             </div>
         </div><br/>
-        <div class="container">
+        <div class="container text-center">
             <div class="notification text-center">
                 Your details: <br/>
                 Your profile ID: {{this.profileId}}<br/>
@@ -51,6 +51,9 @@
                 <div class="text-center">
                     Hero Image: <img :src="this.heroImage" alt="No Hero Image" /><br/>
                 </div>
+                <template>
+                    <b-table :data="myPetitionsData" :columns="myPetitionsColumns"></b-table>
+                </template><hr/>
             </div>
 
         </div>

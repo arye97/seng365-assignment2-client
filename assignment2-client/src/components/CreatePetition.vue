@@ -126,7 +126,7 @@
             };
         },
         async mounted() {
-            if (sessionStorage.getItem('token') !== null) {
+            if (sessionStorage.getItem('token') === null) {
                 this.goToPage('/login');
             }
             await server.get('api/v1/petitions/categories').then(response => {
