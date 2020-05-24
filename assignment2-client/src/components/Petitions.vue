@@ -15,6 +15,9 @@
                         <b-navbar-item  v-if="this.isLoggedIn" v-on:click="goToPage('/profile/edit')">
                             Edit Profile
                         </b-navbar-item>
+                        <b-navbar-item  v-if="this.isLoggedIn" v-on:click="goToPage('/petitions/create')">
+                            Create Petition
+                        </b-navbar-item>
                     </template>
                 </template>
 
@@ -62,7 +65,7 @@
                 <div class="panel-block"> <!-- Table of all petitions -->
                     <b-table :data="this.allPetitionsData" paginated per-page="10" >
                         <template slot-scope="props">
-                            <b-table-column :key="props.row.petitionId" v-bind="props.row" :default-sort-direction="DESC">
+                            <b-table-column :key="props.row.petitionId" v-bind="props.row" >
                                 <b-button v-bind="props.row"  :key="props.row.petitionId" v-on:click="goToPetition(props.row.petitionId)">Open</b-button>
                             </b-table-column>
                             <template v-for="column in petitionColumns">
@@ -272,19 +275,6 @@
 
         },
         async beforeMount() {
-            //get the data for the categories
-            await server.get('api/v1/petitions/categories').then(response => {
-                let i;
-                for (i = 0; i < response.data.length; i++) {
-                    let newCategory = {
-                        'categoryId' : response.data[i]['categoryId'],
-                        'name' : response.data[i]['name']
-                    };
-                    this.categoriesData.push(newCategory);
-                }
-            }).catch(error => {
-                console.error(error);
-            });
 
 
             //get the data for the petitions columns
@@ -304,6 +294,20 @@
             }).catch(error => {
                 console.error(error);
                 this.$buefy.snackbar.open({message: `Could not retrieve petition information, try again later`, duration: 5000, type: "is-danger"});
+            });
+
+            //get the data for the categories
+            await server.get('api/v1/petitions/categories').then(response => {
+                let i;
+                for (i = 0; i < response.data.length; i++) {
+                    let newCategory = {
+                        'categoryId' : response.data[i]['categoryId'],
+                        'name' : response.data[i]['name']
+                    };
+                    this.categoriesData.push(newCategory);
+                }
+            }).catch(error => {
+                console.error(error);
             });
 
             let i = 0;

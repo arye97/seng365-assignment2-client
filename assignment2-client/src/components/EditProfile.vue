@@ -15,7 +15,7 @@
                         View Petitions
                     </b-navbar-item>
                     <b-navbar-item v-on:click="goToPage('/')">
-                        Create
+                        Create Petition
                     </b-navbar-item>
                 </template>
 
