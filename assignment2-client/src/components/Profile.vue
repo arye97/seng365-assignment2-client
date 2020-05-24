@@ -60,12 +60,11 @@
 
 <script>
     import server from "../Api";
-    import {tokenStore} from "../main";
     export default {
         name: "Profile",
         data() {
             return {
-                profileId: tokenStore.state.userId,
+                profileId: sessionStorage.getItem('userId'),
                 //for buefy functionality
                 profileViewing: "user-profile",
                 open: true,
@@ -77,14 +76,14 @@
             };
         },
         mounted() {
-
-            if (tokenStore === undefined) { //then there's no stored token
+            let token = sessionStorage.getItem('token');
+            if (token === null) { //then there's no stored token
                 this.$router.push('/'); //routes back to login
             }
             //get user details
 
-            server.get('/api/v1/users/'.concat(tokenStore.state.userId),
-                {headers: {'X-Authorization' : tokenStore.state.token}
+            server.get('/api/v1/users/'.concat(this.profileId),
+                {headers: {'X-Authorization' : token}
                 }).then(response => {
                     if (response.status === 200) {
                         this.user = response.data;
@@ -93,17 +92,15 @@
                     }
             }).catch(error => {
                 console.error(error);
-                tokenStore.setUserId(null);
-                tokenStore.setToken(null);
+                sessionStorage.setItem('userId', null);
+                sessionStorage.setItem('token', null);
                 this.$router.push('/login');
             })
 
-            server.get(`/api/v1/users/${tokenStore.state.userId}/photo`,
-                {responseType : 'blob', headers: {'X-Authorization' : tokenStore.state.token}})
+            server.get(`/api/v1/users/${this.profileId}/photo`,
+                {responseType : 'blob', headers: {'X-Authorization' : token}})
                 .then(response => {
-                    console.log(response.data);
                     this.heroImage = URL.createObjectURL(response.data);
-                    console.log(response.data.heroImage);
             }).catch(error => {console.error(error)});
 
         },
@@ -113,18 +110,19 @@
                 this.$router.push(endpoint);
             },
             async logout() {
+                let token = sessionStorage.getItem('token');
                 await server.post('/api/v1/users/logout', null,
-                    {headers: {"content-type": "application/json", 'X-Authorization': tokenStore.state.token}
+                    {headers: {"content-type": "application/json", 'X-Authorization': token}
                     }
                 ).then(response => {
                     console.log(response);
                     console.log('User logged out successfully!');
-                    tokenStore.setToken(null);
+                    sessionStorage.setItem('token', null);
                     this.$router.push('/'); //routes back to login
                 }).catch(error => {
                     console.error(error);
                     console.log("User already logged out.");
-                    tokenStore.setToken(null);
+                    sessionStorage.setItem('token', null);
                     this.$router.push('/'); //still get them out
                 })
             }

@@ -44,32 +44,6 @@
         </section>
         <br/>
         <br/>
-        <h1 class="text-center">Click to view</h1>
-        <section class="petitionTable">
-
-            <b-collapse
-                    aria-id="contentIdForA11y3"
-                    class="panel"
-                    animation="slide"
-                    :open.sync="isOpen">
-                <div
-                        slot="trigger"
-                        class="panel-heading"
-                        role="button"
-                        aria-controls="contentIdForA11y3">
-                    <strong>Petition Categories</strong>
-                </div>
-
-                <div class="panel-block"> <!-- Table of all petitions -->
-                    <b-table
-                            :data="categoriesData"
-                            :columns="categoryColumns">
-                    </b-table>
-                </div>
-            </b-collapse>
-
-        </section>
-        <br/>
         <section class="petitionTable">
             <br/>
             <b-collapse
@@ -88,7 +62,7 @@
                 <div class="panel-block"> <!-- Table of all petitions -->
                     <b-table :data="this.allPetitionsData" paginated per-page="10" >
                         <template slot-scope="props">
-                            <b-table-column :key="props.row.petitionId" v-bind="props.row">
+                            <b-table-column :key="props.row.petitionId" v-bind="props.row" :default-sort-direction="DESC">
                                 <b-button v-bind="props.row"  :key="props.row.petitionId" v-on:click="goToPetition(props.row.petitionId)">Open</b-button>
                             </b-table-column>
                             <template v-for="column in petitionColumns">
@@ -98,14 +72,7 @@
                                     <template
                                             v-if="column.searchable"
                                             slot="searchable"
-                                            slot-scope="props"
                                             >
-                                        <b-input
-                                                v-model="props.filters[props.column.field]"
-                                                placeholder="Search..."
-                                                icon="magnify"
-                                                size="is-small">
-                                        </b-input>
                                     </template>
                                     {{ props.row[column.field] }}
                                 </b-table-column>
@@ -221,13 +188,12 @@
 
 <script>
     import server from "../Api";
-    import {tokenStore} from "../main";
 
     export default {
         name: "Petitions",
         data () {
             return {
-                isLoggedIn : (tokenStore.state.token !== null),
+                isLoggedIn : (sessionStorage.getItem('token') !== null),
                 //for pagination
                 prevIcon : 'chevron-left',
                 nextIcon : 'chevron-right',
@@ -286,6 +252,7 @@
                         field: 'category',
                         label: 'Category',
                         centered: true,
+                        searchable: true,
                         sortable: true
                     },
                     {
@@ -336,6 +303,7 @@
                 }
             }).catch(error => {
                 console.error(error);
+                this.$buefy.snackbar.open({message: `Could not retrieve petition information, try again later`, duration: 5000, type: "is-danger"});
             });
             let i = 0;
 
@@ -361,18 +329,19 @@
             },
             async searchForPetitions() {},
             async logout() {
+                let token = sessionStorage.getItem('token');
                 await server.post('/api/v1/users/logout', null,
-                    {headers: {"content-type": "application/json", 'X-Authorization': tokenStore.state.token}
+                    {headers: {"content-type": "application/json", 'X-Authorization': token}
                     }
                 ).then(response => {
                     console.log(response);
                     console.log('User logged out successfully!');
-                    tokenStore.setToken(null);
+                    sessionStorage.setItem('token', null);
                     this.$router.push('/'); //routes back to login
                 }).catch(error => {
                     console.error(error);
                     console.log("User already logged out.");
-                    tokenStore.setToken(null);
+                    sessionStorage.setItem('token', null);
                     this.$router.push('/'); //still get them out
                 })
             }

@@ -103,13 +103,12 @@
 
 <script>
     import server from "../Api";
-    import {tokenStore} from "../main";
     export default {
         name: "CreatePetition",
         data() {
             return {
                 //for updating user details
-                isLoggedIn: (tokenStore !== undefined),
+                isLoggedIn: (sessionStorage.getItem('token') !== null),
                 petitionId: null,
                 title: null,
                 description: null,
@@ -127,7 +126,7 @@
             };
         },
         async mounted() {
-            if (tokenStore === undefined) {
+            if (sessionStorage.getItem('token') !== null) {
                 this.goToPage('/login');
             }
             await server.get('api/v1/petitions/categories').then(response => {
@@ -158,7 +157,7 @@
 
             async signPetition() {
                 await server.post(`/api/v1/petitions/${this.petitionId}/signatures`, null,
-                    {headers: {'X-Authorization': tokenStore.state.token}})
+                    {headers: {'X-Authorization': sessionStorage.getItem('token')}})
                     .then(response => {
                         console.log(response);
                         console.log("Petition Signed");
@@ -168,7 +167,7 @@
                     });
             },
             async createPetition() {
-
+                let token = sessionStorage.getItem('token');
                 let newPetition = {
                     "title": this.title,
                     "description": this.description,
@@ -176,44 +175,45 @@
                     "closingDate": this.closingDate.getUTCDate,
                     "heroImage": "No hero image!"
                 };
-                console.log(newPetition);
-                //create basic petition
 
                 await server.post('/api/v1/petitions', newPetition,
-                    {headers: {"content-type": "application/json", 'X-Authorization': tokenStore.state.token}
+                    {headers: {"content-type": "application/json", 'X-Authorization': token}
                 }).then(response => {
                     this.petitionId = response.data.petitionId;
+                    this.$buefy.snackbar.open({position: "is-bottom" ,message: `Petition Created!`, duration: 5000, type: "is-success"});
                     this.goToPage(`/petitions/${this.petitionId}`);
                 }).catch(error => {
                     console.error(error);
+                    this.$buefy.snackbar.open({message: `Error creating petition, try again later`, duration: 5000, type: "is-danger"});
                 });
 
                 if (this.validateImageType(this.heroImage)) {
                     await server.put(`/api/v1/petitions/${this.petitionId}/photo`,
                         this.heroImage,
-                        {headers: {"content-type": this.heroImage.type, 'X-Authorization': tokenStore.state.token}
+                        {headers: {"content-type": this.heroImage.type, 'X-Authorization': token}
                         }).then(response => {
                         console.log(response);
                     })
                         .catch(error => {
-                            console.error(error)
+                            console.error(error);
                         });
                 }
                 this.signPetition();
             },
             async logout() {
+                let token = sessionStorage.getItem('token');
                 await server.post('/api/v1/users/logout', null,
-                    {headers: {"content-type": "application/json", 'X-Authorization': tokenStore.state.token}
+                    {headers: {"content-type": "application/json", 'X-Authorization': token}
                     }
                 ).then(response => {
                     console.log(response);
                     console.log('User logged out successfully!');
-                    tokenStore.setToken(null);
+                    sessionStorage.setItem('token', null);
                     this.$router.push('/'); //routes back to login
                 }).catch(error => {
                     console.error(error);
                     console.log("User already logged out.");
-                    tokenStore.setToken(null);
+                    sessionStorage.setItem('token', null);
                     this.$router.push('/'); //still get them out
                 })
             }

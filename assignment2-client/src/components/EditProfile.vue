@@ -84,7 +84,7 @@
 
 <script>
     import server from "../Api";
-    import {tokenStore} from "../main";
+
     export default {
         name: "EditProfile",
         data() {
@@ -114,39 +114,42 @@
                 this.$router.push(endpoint);
             },
             async updateDetails () {
-                console.log(tokenStore.state.token);
+
+                let token = sessionStorage.getItem('token');
+                let userId = sessionStorage.getItem('userId');
                 if (this.name !== null) {this.updatedDetails['name'] = this.name}
                 if (this.email !== null) {this.updatedDetails['email'] = this.email}
                 if (this.password !== null) {this.updatedDetails['password'] = this.password}
                 if (this.currentPassword !== null) {this.updatedDetails['currentPassword'] = this.currentPassword}
                 if (this.city !== null) {this.updatedDetails['city'] = this.city}
                 if (this.country !== null) {this.updatedDetails['country'] = this.country}
-                await server.patch('/api/v1/users/'.concat(tokenStore.state.userId), this.updatedDetails,
-                    {headers: {"content-type": "application/json", 'X-Authorization': tokenStore.state.token}}
+                await server.patch('/api/v1/users/'.concat(userId), this.updatedDetails,
+                    {headers: {"content-type": "application/json", 'X-Authorization': token}}
                 ).then(response => {
-                    Promise.resolve(response);
+                    console.log(response);
                     this.toUpdate = true;
-                    this.$buefy.snackbar.open({position: "is-bottom" ,message: `User details saved successfully`, duration: 3500, type: "is-success"});
+                    this.$buefy.snackbar.open({position: "is-bottom" ,message: `User details saved successfully`, duration: 5000, type: "is-success"});
                     this.$router.push('/profile');
                 }).catch(error => {
                     console.error(error);
-                    this.$buefy.snackbar.open({message: `Error saving changes, could not update`, duration: 2000, type: "is-danger"});
+                    this.$buefy.snackbar.open({message: `Error saving changes, could not update`, duration: 5000, type: "is-danger"});
 
                 })
             },
             async logout() {
+                let token = sessionStorage.getItem('token');
                 await server.post('/api/v1/users/logout', null,
-                    {headers: {"content-type": "application/json", 'X-Authorization': tokenStore.state.token}
+                    {headers: {"content-type": "application/json", 'X-Authorization': token}
                     }
                 ).then(response => {
                     console.log(response);
                     console.log('User logged out successfully!');
-                    tokenStore.setToken(null);
+                    sessionStorage.setItem('token', null);
                     this.$router.push('/'); //routes back to login
                 }).catch(error => {
                     console.error(error);
                     console.log("User already logged out.");
-                    tokenStore.setToken(null);
+                    sessionStorage.setItem('token', null);
                     this.$router.push('/'); //still get them out
                 })
             }

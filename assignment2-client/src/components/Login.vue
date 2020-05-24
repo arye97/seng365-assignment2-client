@@ -72,7 +72,6 @@
 
 <script>
     import server from '../Api';
-    import {tokenStore} from "../main";
     async function validUser(userLogin) {
         return (userLogin.email !== '' && userLogin.password !== '')
     }
@@ -107,9 +106,9 @@
                 ).then(response => { //If successfully logged the response will have a status of 201
                     if (response.status === 200) {
                         console.log('User Logged In Successfully!');
-                        tokenStore.setToken(response.data['token']);
-                        tokenStore.setUserId(response.data['userId']);
-                        console.log(tokenStore.state.token);
+                        sessionStorage.setItem('token', response.data['token']);
+                        sessionStorage.setItem('userId', response.data['userId']);
+                        this.$buefy.snackbar.open({position: "is-bottom" ,message: `Logged in successfully!`, duration: 5000, type: "is-success"});
                         this.$router.push("/profile"); //Route to profile screen on successful login
                     } else {
                         console.log(response.status);
@@ -117,7 +116,8 @@
                 }).catch(error => { //If an error occurs during login (includes server side errors)
                     console.log(error);
                     //Get alert bar element
-                    this.message = error.message;
+                    this.$buefy.snackbar.open({message: `Could not log in, email or password may be incorrect`, duration: 5000, type: "is-danger"});
+                    this.message = error
                 });
             }
         }

@@ -96,7 +96,6 @@
 
 <script>
     import server from '../Api'
-    import {tokenStore} from "../main";
 
     export default {
         name: "NewUser",
@@ -141,10 +140,11 @@
                     }
                 ).then(async response => { //If successfully registered the response will have a status of 201
                     console.log('User Registered Successfully!');
-                    console.log(response.data);
-                    await tokenStore.setUserId(response.data['userId']);
+                    sessionStorage.setItem('token', response.data['token']);
+                    this.$buefy.snackbar.open({position: "is-bottom" ,message: `Registered successfully`, duration: 5000, type: "is-success"});
                 }).catch(error => {
                     console.error(error);
+                    this.$buefy.snackbar.open({message: `Error has occurred during registration, try again later`, duration: 5000, type: "is-danger"});
                 });
                 await server.post('/api/v1/users/login',
                     {email: this.email.trim(), password: this.password.trim()},
@@ -154,8 +154,8 @@
                 ).then(response => { //If successfully logged the response will have a status of 201
                     if (response.status === 200) {
                         console.log('User Logged In Successfully!');
-                        tokenStore.setToken(response.data['token']);
-                        tokenStore.setUserId(response.data['userId']);
+                        sessionStorage.setItem('token', response.data['token']);
+                        sessionStorage.setItem('userId', response.data['userId']);
                     } else {
                         console.log(response.status);
                     }
@@ -163,13 +163,12 @@
                     console.log(error);
                 });
 
-                let userId = tokenStore.state.userId;
-                let token = tokenStore.state.token;
-                console.log(userId, token);
+                let userId = sessionStorage.getItem('userId');
+                let token = sessionStorage.getItem('token');
                 if (this.validateImageType(this.heroImage)) {
                     await server.put(`/api/v1/users/${userId}/photo`,
                         this.heroImage,
-                        {headers: {"content-type": this.heroImage.type, 'X-Authorization': tokenStore.state.token}
+                        {headers: {"content-type": this.heroImage.type, 'X-Authorization': token}
                         }).then(response => {
                         console.log(response);
                     })
