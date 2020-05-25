@@ -49,11 +49,6 @@
         <br/>
         <section class="petitionTable">
             <br/>
-            <b-collapse
-                    aria-id="contentIdForA11y2"
-                    class="panel"
-                    animation="slide"
-                    :open.sync="allPetitionsIsOpen">
                 <div
                         slot="trigger"
                         class="panel-heading"
@@ -105,7 +100,6 @@
 
 
                 </div>
-            </b-collapse>
 
         </section>
         <br/>

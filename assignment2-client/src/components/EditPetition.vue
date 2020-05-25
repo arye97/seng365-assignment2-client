@@ -33,7 +33,7 @@
         <section>
             <div class="container">
                 <div class="notification text-center">
-                    Create a Petition
+                    Edit Your Petition
                 </div>
             </div><br/>
             <div class="container">
@@ -42,15 +42,15 @@
 
                         <section>
                             <b-field label="Title">
-                                <b-input v-model="title" placeholder="E.g bring back $2 noodles" required></b-input>
+                                <b-input v-model="title" placeholder="E.g bring back $2 noodles"></b-input>
                             </b-field>
 
                             <b-field label="Description">
-                                <b-input v-model="description" type="textarea" placeholder="Eg: the noodles were pretty cool" required></b-input>
+                                <b-input v-model="description" type="textarea" placeholder="Eg: the noodles were pretty cool"></b-input>
                             </b-field>
 
                             <b-field label="Category">
-                                <b-select expanded v-model="categoryId" required>
+                                <b-select expanded v-model="categoryId">
                                     <option
                                             v-for="(category, id) in categories"
                                             :value="category"
@@ -61,7 +61,7 @@
                             </b-field>
                             <b-field label="Upload a Hero Image"></b-field>
                             <b-field  class="file">
-                                <b-upload v-model="heroImage" required>
+                                <b-upload v-model="heroImage">
                                     <a class="button is-primary">
                                         <b-icon icon="upload"></b-icon>
                                         <span>Click to upload</span>
@@ -71,21 +71,23 @@
                                     {{ heroImage.name }}
                                 </span>
                             </b-field>
+
                             <b-button v-if="heroImage" type="is-danger"
                                       icon-right="delete" v-on:click="removeHeroImage">
                                 Remove Selected Image
                             </b-button>
 
-                                <b-field label="Date">
-                                    <b-datetimepicker
-                                            placeholder="Select Date"
-                                            v-model="closingDate"
-                                            icon="calendar"
-                                            >
-                                    </b-datetimepicker>
-                                </b-field>
+                            <b-field label="Date">
+                                <b-datetimepicker
+                                        placeholder="Select Date"
+                                        v-model="closingDate"
+                                        icon="calendar"
+                                >
+                                </b-datetimepicker>
+                            </b-field>
+                            {{ new Date(closingDate)}}
                             <hr/>
-                            <b-button type="is-primary" outlined v-on:click="createPetition">Create</b-button>
+                            <b-button type="is-primary" outlined v-on:click="updatePetition">Update</b-button>
                         </section>
                     </div>
                 </div>
@@ -98,7 +100,7 @@
 <script>
     import server from "../Api";
     export default {
-        name: "CreatePetition",
+        name: "EditPetition",
         data() {
             return {
                 //for updating user details
@@ -107,7 +109,7 @@
                 title: null,
                 description: null,
                 categoryId: null,
-                closingDate: null,
+                closingDate: new Date(),
                 heroImage: null,
                 categories: [],
                 //for buefy functionality
@@ -117,13 +119,16 @@
                 //get user data here
                 petition: null,
                 newClosingDate: null
-
             };
         },
         async mounted() {
             if (sessionStorage.getItem('token') === null) {
                 this.goToPage('/login');
             }
+            //get this petitions Id
+            this.petitionId = this.$route.params.id;
+
+            //get categories
             await server.get('api/v1/petitions/categories').then(response => {
                 let i;
                 for (i = 0; i < response.data.length; i++) {
@@ -138,11 +143,11 @@
             });
         },
         methods: {
-            removeHeroImage () {
-                this.heroImage = null;
-            },
             goToPage(endpoint) {
                 this.$router.push(endpoint);
+            },
+            async removeHeroImage () {
+                this.heroImage = null;
             },
             validateImageType(photo) {
                 if (photo === null) {return false}
@@ -152,57 +157,44 @@
                 }
                 return true
             },
-
-            async signPetition() {
-                await server.post(`/api/v1/petitions/${this.petitionId}/signatures`, null,
-                    {headers: {'X-Authorization': sessionStorage.getItem('token')}})
-                    .then(response => {
-                        console.log(response);
-                        console.log("Petition Signed");
-                    })
-                    .catch(error => {
-                        console.error(error);
-                    });
-            },
-            async createPetition() {
+            async updatePetition() {
                 let token = sessionStorage.getItem('token');
-                if (this.closingDate !== null) {
-                    this.newClosingDate = this.closingDate;
-                    let year = this.newClosingDate.getFullYear();
-                    let month = this.newClosingDate.getMonth() + 1;
-                    let day = this.newClosingDate.getDate();
-                    let hour = this.newClosingDate.getHours();
-                    let minutes = this.newClosingDate.getMinutes();
-                    let seconds = this.newClosingDate.getSeconds();
-                    let mseconds = this.newClosingDate.getMilliseconds();
+                this.newClosingDate = this.closingDate;
+                let year = this.newClosingDate.getFullYear();
+                let month = this.newClosingDate.getMonth()+1;
+                let day = this.newClosingDate.getDate();
+                let hour = this.newClosingDate.getHours();
+                let minutes = this.newClosingDate.getMinutes();
+                let seconds = this.newClosingDate.getSeconds();
+                let mseconds = this.newClosingDate.getMilliseconds();
 
-                    if (day < 10) {
-                        day = '0' + day;
-                    }
-                    if (month < 10) {
-                        month = '0' + month;
-                    }
-
-                    this.newClosingDate = (year + '-' + month + '-' + day + ' ' + hour + ':' + minutes + ':' + seconds + '.' + mseconds);
+                if (day < 10) {
+                    day = '0' + day;
                 }
-                let newPetition = {
-                    "title": this.title,
-                    "description": this.description,
-                    "categoryId": this.categoryId.categoryId,
-                    "closingDate": this.newClosingDate,
-                    "heroImage": "No hero image!"
-                };
+                if (month < 10) {
+                    month = '0' + month;
+                }
 
-                await server.post('/api/v1/petitions', newPetition,
+                this.newClosingDate = (year + '-' + month + '-' + day + ' ' + hour + ':' + minutes + ':' + seconds + '.' + mseconds);
+                let updatedDetails = {};
+
+                if (this.title !== null) {updatedDetails['title'] = this.title}
+                if (this.description !== null) {updatedDetails['description'] = this.description}
+                if (this.categoryId !== null) {updatedDetails['categoryId'] = this.categoryId.categoryId}
+                if (this.closingDate !== null) {updatedDetails['closingDate'] = this.closingDate}
+                if (this.heroImage !== null) {updatedDetails['heroImage'] = this.heroImage}
+
+
+                await server.patch('/api/v1/petitions', updatedDetails,
                     {headers: {"content-type": "application/json", 'X-Authorization': token}
-                }).then(response => {
-                    this.petitionId = response.data.petitionId;
-                    this.$buefy.snackbar.open({position: "is-bottom" ,message: `Petition Created!`, duration: 5000, type: "is-success"});
-                    this.goToPage(`/petitions/${this.petitionId}`);
-                }).catch(error => {
-                    console.error(error);
-                    this.$buefy.snackbar.open({message: `Error creating petition, try again later`, duration: 5000, type: "is-danger"});
-                });
+                    }).then(response => {
+                        console.log(response);
+                        this.$buefy.snackbar.open({position: "is-bottom" ,message: `Petition Updated!`, duration: 5000, type: "is-success"});
+                        this.goToPage(`/petitions/${this.petitionId}`);
+                    }).catch(error => {
+                        console.error(error);
+                        this.$buefy.snackbar.open({message: `Error updating petition, try again later`, duration: 5000, type: "is-danger"});
+                    });
 
                 if (this.validateImageType(this.heroImage)) {
                     await server.put(`/api/v1/petitions/${this.petitionId}/photo`,
@@ -215,7 +207,6 @@
                             console.error(error);
                         });
                 }
-                this.signPetition();
             },
             async logout() {
                 let token = sessionStorage.getItem('token');

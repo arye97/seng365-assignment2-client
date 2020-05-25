@@ -11,10 +11,18 @@
                     <b-navbar-item v-on:click="goToPage('/petitions')">
                         View Petitions
                     </b-navbar-item>
+                    <b-navbar-item v-on:click="goToPage('/profile')">
+                        My Profile
+                    </b-navbar-item>
                 </template>
                 <template slot="end">
                     <b-navbar-item tag="div">
-                        <div class="buttons">
+                        <div class="buttons" v-if="isLoggedIn">
+                            <a class="button is-primary" v-on:click="logout">
+                                Logout
+                            </a>
+                        </div>
+                        <div class="buttons" v-if="!isLoggedIn">
                             <a class="button is-primary" v-on:click="goToPage('/Register')">
                                 <strong>Sign up</strong>
                             </a>
@@ -79,16 +87,45 @@
         name: "Login",
         data() {
             return {
+                isLoggedIn : false,
                 email: '',
                 password: '',
                 message: null
             }
         },
+        mounted() {
+            if (sessionStorage.getItem('token') !== null) {
+                this.isLoggedIn = true;
+            }
+
+        },
         methods: {
             goToPage(page) {
                 this.$router.push(page);
             },
+            async logout() {
+                let token = sessionStorage.getItem('token');
+                this.isLoggedIn = false;
+                await server.post('/api/v1/users/logout', null,
+                    {headers: {"content-type": "application/json", 'X-Authorization': token}
+                    }
+                ).then(response => {
+                    console.log(response);
+                    console.log('User logged out successfully!');
+                    sessionStorage.setItem('token', null);
+                    this.$router.push('/'); //routes back to login
+                }).catch(error => {
+                    console.error(error);
+                    console.log("User already logged out.");
+                    sessionStorage.setItem('token', null);
+                    this.$router.push('/'); //still get them out
+                })
+            },
             async login() {
+                if (this.isLoggedIn) {
+                    this.$buefy.snackbar.open({message: `Sorry, you need to logout before you can log in as someone else.`, duration: 5000, type: "is-danger"});
+                    return
+                }
                 const userLogin = {
                     email: this.email.trim(),
                     password: this.password.trim()

@@ -67,6 +67,10 @@
                                     {{ heroImage.name }}
                                 </span>
         </b-field>
+        <b-button v-if="heroImage" type="is-danger"
+                  icon-right="delete" v-on:click="removeHeroImage">
+            Delete
+        </b-button>
 
         <b-field label="Fields marked * are required!"></b-field>
         <b-field class="buttons">
@@ -121,6 +125,9 @@
                 }
                 return true
             },
+            async removeHeroImage () {
+                this.heroImage = null;
+            },
             async registerUser() {
                 // Save the data as a newUser object
                 const newUser = {
@@ -129,7 +136,7 @@
                     password: this.password.trim(),
                     country: this.country.trim(),
                     city: this.city.trim(),
-                    heroImage: "Loading..."
+                    heroImage: "Loading"
                 };
 
                 // The HTTP Post Request
@@ -165,15 +172,16 @@
 
                 let userId = sessionStorage.getItem('userId');
                 let token = sessionStorage.getItem('token');
+
                 if (this.validateImageType(this.heroImage)) {
                     await server.put(`/api/v1/users/${userId}/photo`,
                         this.heroImage,
                         {headers: {"content-type": this.heroImage.type, 'X-Authorization': token}
                         }).then(response => {
                         console.log(response);
-                    })
+                        })
                         .catch(error => {
-                            console.error(error)
+                            console.error(error);
                         });
                 }
 

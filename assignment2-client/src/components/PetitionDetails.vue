@@ -17,6 +17,9 @@
                     <b-navbar-item v-on:click="goToPage('/petitions')">
                         View Petitions
                     </b-navbar-item>
+                    <b-navbar-item  v-if="this.userId" v-on:click="goToPage('/petitions/create')">
+                        Create Petition
+                    </b-navbar-item>
                 </template>
 
                 <template slot="end">
@@ -94,14 +97,16 @@
         <section>
             <div class="container">
                 <div class="notification text-center">
-                    <div>
-
-                    <button class="button is-primary-outlined is-danger" v-if="unsign" @click="confirm">
-                        Remove Signature
-                    </button>
-                    <a class="button is-primary-outlined" size="larger" v-else v-on:click="this.signPetition">
-                        <strong>Sign Petition</strong>
-                    </a>
+                    <div v-if="!isMyPetition">
+                        <button class="button is-primary-outlined is-danger" v-if="unsign" @click="confirm">
+                            Remove Signature
+                        </button>
+                        <a class="button is-primary-outlined" size="larger" v-else v-on:click="this.signPetition">
+                            <strong>Sign Petition</strong>
+                        </a>
+                    </div>
+                    <div v-else>
+                        <h1>You can't remove your signature from a petition you created</h1>
                     </div>
                     <br/><br/>
                     <strong>Signature Count:</strong> <br/> {{this.petition.signatureCount}}<br/><br/>
@@ -112,7 +117,7 @@
                                 <template v-for="column in signatoryColumns">
                                     <b-table-column :key="column.signatoryId" v-if="column.isImage" v-bind="column">
                                         <template>
-                                            <img :src="props.row.profileImage" height="100" width="100" alt="No Hero Image"/>
+                                            <img :src="props.row.profileImage" height="100" width="100" alt="No Hero Image" onerror="setDefaultProfile(props.row.signatoryId)"/>
                                         </template>
                                     </b-table-column>
                                     <b-table-column v-else :key="column.name" v-bind="column">
@@ -123,11 +128,18 @@
                         </b-table>
                     </template><hr/>
 
+                </div>
 
-                    <b-button v-if="isMyPetition" type="is-danger"
+                <div  class="notification text-center" v-if="isMyPetition">
+                    <label>Author's Options</label><br/><br/>
+                    <button  class="button is-primary-outlined is-warning"  type="is-warning" v-on:click="editPetition"
+                               icon-right="delete">
+                        Edit Petition
+                    </button><br/><br/>
+                    <button class="button is-primary-outlined is-danger" type="is-danger" v-on:click="confirmDeletePetition"
                               icon-right="delete">
-                        Delete
-                    </b-button>
+                        Delete Petition
+                    </button>
                 </div>
             </div>
         </section>
@@ -276,12 +288,13 @@
                         this.signatoryData[j]['profileImage'] = URL.createObjectURL(response.data);
                     })
                     .catch(error => {
+                        this.signatoryData[j]['profileImage'] = "https://i.imgur.com/QKN0RVE.png";
                         console.log(error)
                     });
                 j++;
             }
 
-            this.sharing.url = url;
+            this.sharing.url = 'https://canterbury.ac.nz' + url;
 
             await server.get('/api/v1/petitions/'.concat(this.petitionId)).then(response => {
                 if (response.status === 200) {
@@ -298,11 +311,13 @@
                 console.error(error);
             });
 
-            await server.get(`/api/v1/petitions/${this.petitionId}/photo`, {responseType : 'blob'}).then(response => {
-
-                this.heroImage = URL.createObjectURL(response.data);
-
-            }).catch(error => {console.error(error)});
+            await server.get(`/api/v1/petitions/${this.petitionId}/photo`, {responseType : 'blob'})
+                .then(response => {
+                    this.heroImage = URL.createObjectURL(response.data);
+                }).catch(error => {
+                    console.error(error)
+                    this.heroImage = "https://i.imgur.com/QKN0RVE.png";
+                });
 
 
             await server.get(`/api/v1/users/${this.petition.authorId}`)
@@ -324,12 +339,32 @@
                 .then(response => {
                     this.authorData[0].heroImage = URL.createObjectURL(response.data);
                 }).catch(error => {
+                    this.authorData[0].heroImage = "https://i.imgur.com/QKN0RVE.png";
                     console.error(error);
                 });
 
-            this.isMyPetition = (this.petition.authorId === this.userId);
+            this.isMyPetition = (this.petition.authorId === parseInt(this.userId,10));
+            console.log(this.petition.authorId, this.userId)
         },
         methods: {
+            setDefaultProfile(signerId){
+                let i;
+                for (i=0; i < this.signatureCount; i++) {
+                    if (this.signatoryData[i]['signatoryId'] === signerId) {
+                        this.signatoryData[i]['profileImage'] = "https://i.imgur.com/QKN0RVE.png";
+                    }
+                }
+            },
+            editPetition() {
+                let now = Date.now();
+                let rightNow = new Date(now * 1000);
+                if (this.petition.closingDate < rightNow) {
+                    this.$buefy.snackbar.open({position: "is-bottom" ,message: `Sorry this petition has closed!`, duration: 5000, type: "is-danger"});
+                    return;
+                }
+                console.log(`/petitions/${this.petitionId}/edit`);
+                this.goToPage(`/petitions/${this.petitionId}/edit`);
+            },
             confirm() {
                 this.$buefy.dialog.confirm({
                     message: 'Remove your signature?',
@@ -339,6 +374,28 @@
                         this.goToPage('/petitions')
                     }
                 })
+            },
+            confirmDeletePetition() {
+                this.$buefy.dialog.confirm({
+                    message: 'Delete this petition?',
+                    onConfirm: () => {
+                        this.deletePetition();
+                        this.goToPage('/profile')
+                    }
+                })
+            },
+            deletePetition() {
+                let token = sessionStorage.getItem('token');
+                server.delete(`/api/v1/petitions/${this.petitionId}/`,
+                    {headers: {'Content-Type' : 'application/json', 'X-Authorization' : token}})
+                    .then(response => {
+                        console.log(response);
+                        this.$buefy.snackbar.open({position: "is-bottom", message: `Petition was deleted successfully`, duration: 5000, type: "is-success"});
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        this.$buefy.snackbar.open({position: "is-bottom", message: `Could not delete petition`, duration: 5000, type: "is-danger"});
+                    });
             },
             async removeSignature() {
                 let token = sessionStorage.getItem('token');
@@ -411,7 +468,7 @@
 <style scoped>
     h1 {
         text-align: center;
-        font-size: larger;
+
     }
 
     .main-photo {

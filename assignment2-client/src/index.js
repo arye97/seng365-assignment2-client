@@ -8,10 +8,15 @@ import Petitions from './components/Petitions'
 import EditProfile from './components/EditProfile'
 import PetitionDetails from './components/PetitionDetails'
 import CreatePetition from "./components/CreatePetition";
-import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
+import Buefy from 'buefy'
+import 'buefy/dist/buefy.css'
+import VueSocialSharing from 'vue-social-sharing'
+import EditPetition from "./components/EditPetition";
+
+Vue.use(VueSocialSharing);
+Vue.use(Buefy);
 Vue.use(Router);
-Vue.use(BootstrapVue);
-Vue.use(IconsPlugin);
+
 
 export default new Router({
     mode: 'history',
@@ -26,6 +31,7 @@ export default new Router({
         {path: '/profile/edit', component: EditProfile},
         {path: '/petitions/create', component: CreatePetition},
         {path: '/petitions/:id', component: PetitionDetails},
+        {path: '/petitions/:id/edit', component: EditPetition},
 
 
         // otherwise redirect to home

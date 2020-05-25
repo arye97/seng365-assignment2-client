@@ -14,7 +14,7 @@
                     <b-navbar-item v-on:click="goToPage('/petitions')">
                         View Petitions
                     </b-navbar-item>
-                    <b-navbar-item v-on:click="goToPage('/')">
+                    <b-navbar-item v-on:click="goToPage('/petitions/create')">
                         Create Petition
                     </b-navbar-item>
                 </template>
@@ -43,6 +43,11 @@
                         <div class="content">
 
                             <section >
+                                <b-button type="is-danger"
+                                          icon-right="delete" v-if="this.originalProfilePhoto" v-on:click="confirm">
+                                    Delete my profile picture
+                                </b-button>
+
                                 <b-field label="Name">
                                     <b-input v-model="name" placeholder="Barry Berkman"></b-input>
                                 </b-field>
@@ -76,6 +81,10 @@
                                     <span class="file-name" v-if="heroImage">
                                     {{ heroImage.name }}
                                 </span>
+                                <b-button type="is-danger"
+                                          icon-right="delete" v-if="this.heroImage" v-on:click="removeHeroImage">
+                                    Remove Selected Image
+                                </b-button>
                                 </b-field>
                                 <b-field label="Country">
                                     <b-input type="text"
@@ -116,14 +125,48 @@
                 toUpdate: false,
 
                 //get user data here
-                user: null
-
+                user: null,
+                originalProfilePhoto: null
             };
+        },
+        async mounted() {
+            let userId = sessionStorage.getItem('userId');
+            await server.get(`/api/v1/users/${userId}/photo`, {responseType: 'blob'})
+                .then(response => {
+                    this.originalProfilePhoto = URL.createObjectURL(response.data);
+                })
+                .catch(error => {
+                    console.error(error)
+                })
         },
         methods: {
 
             goToPage(endpoint) {
                 this.$router.push(endpoint);
+            },
+            confirm() {
+                this.$buefy.dialog.confirm({
+                    message: 'Delete your profile picture?',
+                    onConfirm: () => {
+                        this.deleteProfilePhoto();
+                        this.$buefy.toast.open('Profile picture Removed');
+                    }
+                })
+            },
+            deleteProfilePhoto() {
+                let token = sessionStorage.getItem('token');
+                let userId = sessionStorage.getItem('userId');
+                server.delete(`/api/v1/users/${userId}/photo`, {headers: {'X-Authorization' : token}})
+                    .then(response => {
+                        this.$buefy.snackbar.open({message: `Profile picture deleted`, duration: 2500, type: "is-success"});
+                        console.log(response);
+                    }).catch(error => {
+                        console.error(error);
+                    this.$buefy.snackbar.open({message: `Could not delete photo, try again later`, duration: 2500, type: "is-danger"});
+                    });
+            },
+            async removeHeroImage () {
+                this.heroImage = null;
             },
             validateImageType(photo) {
                 if (photo === null) {return false}
