@@ -36,7 +36,7 @@
         <div class="container">
             <div class="notification text-center">
                 <h1>Welcome to your Petitions Account <strong> {{this.user.name}} </strong></h1><hr/>
-                <img :src="this.heroImage" alt="No Hero Image" onerror="setDefaultProfile" /><br/>
+                <img class="main-photo" :src="this.heroImage" alt="No Hero Image" onerror="setDefaultProfile" /><br/>
             </div>
 
         </div><br/>
@@ -61,9 +61,9 @@
                             </b-table-column>
 
                             <template v-for="column in myPetitionsColumns">
-                                <b-table-column :key="column.petitionId" v-bind="column" v-if="column.isImage" slot="sortable">
+                                <b-table-column :key="column.title" v-bind="column" v-if="column.isImage" slot="sortable">
                                     <template>
-                                        <img :src="getColumnImage(props.row.heroImage)" height="100" width="100" alt="No Hero Image"/>
+                                        <img :src="props.row.heroImage" height="100" width="100" alt="No Hero Image"/>
                                     </template>
                                 </b-table-column>
                                 <b-table-column :key="column.petitionId" v-else v-bind="column" >
@@ -131,14 +131,14 @@
                     }]
             };
         },
-        mounted() {
+        async mounted() {
             let token = sessionStorage.getItem('token');
             if (token === null) { //then there's no stored token
-                this.$router.push('/'); //routes back to login
+                await this.$router.push('/'); //routes back to login
             }
             //get user details
 
-            server.get('/api/v1/users/'.concat(this.profileId),
+            await server.get('/api/v1/users/'.concat(this.profileId),
                 {headers: {'X-Authorization' : token}
                 }).then(response => {
                     if (response.status === 200) {
@@ -153,53 +153,62 @@
                 this.$router.push('/login');
             });
             //get my petitions
-            server.get(`/api/v1/users/${this.profileId}/photo`,
+            await server.get(`/api/v1/users/${this.profileId}/photo`,
                 {responseType : 'blob', headers: {'X-Authorization' : token}})
                 .then(response => {
                     this.heroImage = URL.createObjectURL(response.data);
                 }).catch(error => {
-                this.heroImage = "https://i.imgur.com/QKN0RVE.png";
-                console.error(error)
+                    this.heroImage = "https://i.imgur.com/QKN0RVE.png";
+                    console.error(error)
+                });
+
+
+            await server.get(`/api/v1/petitions?authorId=${this.profileId}`)
+                .then(response => {
+                let i;
+                for (i = 0; i < response.data.length; i++) {
+                    let newPetition = {
+                        'petitionId' : response.data[i]['petitionId'],
+                        'title' : response.data[i]['title'],
+                        'category' : response.data[i]['category'],
+                        'authorName' : response.data[i]['authorName'],
+                        'signatureCount' : response.data[i]['signatureCount'],
+                        'heroImage' : 'Loading...'
+                    };
+                    this.iHavePetitions = true;
+                    this.myPetitionsData.push(newPetition);
+                }
+            }).catch(error => {
+                console.error(error);
+                this.iHavePetitions = true;
+                this.$buefy.snackbar.open({message: `Could not retrieve petition information, try again later`, duration: 5000, type: "is-danger"});
             });
 
-            server.get(`/api/v1/petitions?authorId=${this.profileId}`)
-                .then(response => {
-                    if (response.data.length > 0) {
-                        this.iHavePetitions = true;
-                        this.myPetitionsData = response.data;
-                    }
-            }).catch(error => {
-                this.iHavePetitions = false;
-                console.error(error);
-            });
+
             if (this.iHavePetitions) {
                 let i = 0;
                 while (i < this.myPetitionsData.length) {
                     let petitionId = this.myPetitionsData[i]['petitionId'];
-                    server.get(`api/v1/petitions/${petitionId}/photo`,
+                    await server.get(`api/v1/petitions/${petitionId}/photo`,
                         {responseType : 'blob'})
                         .then(response => {
                             this.myPetitionsData[i]['heroImage'] = URL.createObjectURL(response.data);
                         })
                         .catch(error => {
+                            this.myPetitionsData[i]['heroImage'] = "https://i.imgur.com/QKN0RVE.png";
                             console.log(error)
                         });
                     i++;
                 }
             }
 
+
         },
         methods: {
-            getColumnImage(image) {
-                if (image === undefined) {
-                    return "https://i.imgur.com/QKN0RVE.png";
-                }
-                return image;
-            },
             goToPetition(id) {
                 this.$router.push(`/petitions/${id}`)
             },
-            setDefaultProfile(){
+            async setDefaultProfile(){
                 this.heroImage = "https://i.imgur.com/QKN0RVE.png";
             },
             goToPage(endpoint) {
@@ -237,5 +246,12 @@
     }
     .text-center {
         text-align: center;
+    }
+
+    .main-photo {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 50%;
     }
 </style>

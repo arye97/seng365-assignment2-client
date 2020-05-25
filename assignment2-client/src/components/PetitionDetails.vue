@@ -46,12 +46,12 @@
         <section>
             <div class="container" >
                 <div class="notification text-center ">
-                    <div>
+                    <div v-if="this.petition !== null">
                         <h1><strong>{{this.petition.title}}</strong></h1><hr/>
                     </div>
                     <img class="main-photo" :src="this.heroImage" alt="No Hero Image"/><hr>
                 </div>
-                <div class="notification text-center ">
+                <div class="notification text-center" >
                     <strong>Description:</strong> <br/>{{this.petition.description}}<br/><br/>
                     <strong>Petition Author Details:</strong><br/>
                     <template>
@@ -71,7 +71,9 @@
                         </b-table>
                     </template><hr/>
                     <strong>Created Date:</strong> <br/>{{this.createdDate}}<br/><br/>
-                    <strong>Closing Date:</strong> <br/>{{this.closingDate}}<br/><br/>
+                    <div v-if="this.closingDate">
+                        <strong >Closing Date:</strong> <br/>{{this.closingDate}}<br/><br/>
+                    </div>
 
                 </div>
                 <div class="notification text-center">
@@ -117,7 +119,8 @@
                                 <template v-for="column in signatoryColumns">
                                     <b-table-column :key="column.signatoryId" v-if="column.isImage" v-bind="column">
                                         <template>
-                                            <img :src="props.row.profileImage" height="100" width="100" alt="No Hero Image" onerror="setDefaultProfile(props.row.signatoryId)"/>
+                                            <img :src="props.row.profileImage" height="100" width="100" alt="No Hero Image"/>
+
                                         </template>
                                     </b-table-column>
                                     <b-table-column v-else :key="column.name" v-bind="column">
@@ -259,57 +262,63 @@
 
 
             //need to get signatories user profile pictures too urgh
+            this.sharing.url = 'https://canterbury.ac.nz' + url;
 
             await server.get(`/api/v1/petitions/${this.petitionId}/signatures`)
                 .then(response => {
-                    this.signatoryData = response.data;
                     let i;
-                    for (i=0; i < this.signatoryData.length; i++) {
-                        this.signatoryData[i]['profileImage'] = 'No hero image';
-
-
-                        if (this.signatoryData[i]['signatoryId'] === parseInt(userId, 10)) {
+                    for (i = 0; i < response.data.length; i++) {
+                        let newSignatory = {
+                            'signatoryId': response.data[i]['signatoryId'],
+                            'profileImage': 'Loading...',
+                            'name': response.data[i]['name'],
+                            'city': response.data[i]['city'],
+                            'country': response.data[i]['country'],
+                            'dateSigned': response.data[i]['dateSigned']
+                        };
+                        this.iHavePetitions = true;
+                        if (newSignatory.signatoryId === parseInt(userId, 10)) {
                             this.unsign = true;
                         }
-                        let date = this.signatoryData[i].signedDate;
-                        this.signatoryData[i].signedDate = new Date(date).toDateString();
+                        let date = newSignatory.signedDate;
+                        newSignatory.signedDate = new Date(date).toDateString();
+                        this.signatoryData.push(newSignatory);
                     }
                 }).catch(error => {
                     console.error(error);
                 });
 
-            let j = 0;
-            while (j < this.signatoryData.length) {
 
-                let signerId = this.signatoryData[j]['signatoryId'];
-                await server.get('api/v1/users/'.concat(signerId) + '/photo',
+            let i = 0;
+            while (i < this.signatoryData.length) {
+                let signatoryId = this.signatoryData[i]['signatoryId'];
+                await server.get(`api/v1/users/${signatoryId}/photo`,
                     {responseType : 'blob'})
                     .then(response => {
-                        this.signatoryData[j]['profileImage'] = URL.createObjectURL(response.data);
+                        this.signatoryData[i]['profileImage'] = URL.createObjectURL(response.data);
                     })
                     .catch(error => {
-                        this.signatoryData[j]['profileImage'] = "https://i.imgur.com/QKN0RVE.png";
+                        this.signatoryData[i]['profileImage'] = "https://i.imgur.com/QKN0RVE.png";
                         console.log(error)
                     });
-                j++;
+                i++;
             }
 
-            this.sharing.url = 'https://canterbury.ac.nz' + url;
+
 
             await server.get('/api/v1/petitions/'.concat(this.petitionId)).then(response => {
-                if (response.status === 200) {
-                    this.petition = response.data;
-
-                    this.createdDate = new Date(response.data.createdDate).toDateString();
-                    this.signatureCount = this.petition.signatureCount;
+                this.createdDate = new Date(response.data.createdDate).toDateString();
+                console.log(response.data)
+                if (response.data.closingDate !== null && response.data.closingDate !== undefined) {
                     this.closingDate = new Date(response.data.closingDate).toDateString();
-
-                } else {
-                    console.log(response);
                 }
+                this.petition = response.data;
+                this.signatureCount = this.petition.signatureCount;
+
             }).catch(error => {
                 console.error(error);
             });
+
 
             await server.get(`/api/v1/petitions/${this.petitionId}/photo`, {responseType : 'blob'})
                 .then(response => {
@@ -343,8 +352,9 @@
                     console.error(error);
                 });
 
+
+
             this.isMyPetition = (this.petition.authorId === parseInt(this.userId,10));
-            console.log(this.petition.authorId, this.userId)
         },
         methods: {
             setDefaultProfile(signerId){
@@ -356,6 +366,10 @@
                 }
             },
             editPetition() {
+                if (this.petition.closingDate == null) {
+                    this.goToPage(`/petitions/${this.petitionId}/edit`);
+                    return;
+                }
                 let now = Date.now();
                 let rightNow = new Date(now * 1000);
                 if (this.petition.closingDate < rightNow) {
@@ -425,7 +439,6 @@
 
                 let now = Date.now();
                 let rightNow = new Date(now * 1000);
-                console.log(rightNow)
                 if ((this.petition.closingDate < rightNow) && (this.petition.closingDate !== null)) {
                     this.$buefy.snackbar.open({position: "is-bottom" ,message: `Sorry this petition has closed!`, duration: 5000, type: "is-danger"});
                     return;
@@ -433,10 +446,8 @@
 
                 await server.post(`/api/v1/petitions/${this.petitionId}/signatures`, null,
                     {headers: {'X-Authorization': token}})
-                    .then(response => {
-                        console.log(response);
+                    .then(() => {
                         this.signatureCount += 1;
-                        console.log("Petition Signed");
                         this.$buefy.snackbar.open({position: "is-bottom" ,message: `Petition Signed!`, duration: 5000, type: "is-success"});
                     })
                     .catch(error => {

@@ -159,7 +159,6 @@
             server.get(`/api/v1/users/${userId}`)
                 .then(response => {
                     this.user = response.data;
-                    console.log(this.user)
                 })
                 .catch(error => {
                     console.error(error)
@@ -172,8 +171,11 @@
                 })
                 .catch(error => {
                     this.originalProfilePhoto = "https://i.imgur.com/QKN0RVE.png";
+                    console.log('image set');
                     console.error(error)
                 })
+
+
         },
         methods: {
 

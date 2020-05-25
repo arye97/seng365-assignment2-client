@@ -81,8 +81,11 @@
                                             placeholder="Select Date"
                                             v-model="closingDate"
                                             icon="calendar"
+                                            aria-required="true"
                                             >
+
                                     </b-datetimepicker>
+                                    {{this.closingDate}}
                                 </b-field>
                             <hr/>
                             <b-button type="is-primary" outlined v-on:click="createPetition">Create</b-button>
@@ -154,6 +157,10 @@
             },
             async createPetition() {
                 let token = sessionStorage.getItem('token');
+                // if (this.closingDate === undefined || this.closingDate === null) {
+                //     this.$buefy.snackbar.open({message: `Your petition needs a closing date!`, duration: 5000, type: "is-danger"});
+                //     return;
+                // }
                 if (this.closingDate !== null) {
                     this.newClosingDate = this.closingDate;
                     let year = this.newClosingDate.getFullYear();
@@ -179,16 +186,16 @@
                     "categoryId": this.categoryId.categoryId,
                     "heroImage": "No hero image!"
                 };
-                if (this.closingDate != null) {
+                if (this.closingDate !== null) {
                     newPetition["closingDate"] = this.newClosingDate;
                 }
+                console.log(newPetition)
                 await server.post('/api/v1/petitions', newPetition,
                     {headers: {"content-type": "application/json", 'X-Authorization': token}
                 }).then(response => {
                     this.petitionId = response.data.petitionId;
                     console.log(this.petitionId);
                     this.$buefy.snackbar.open({position: "is-bottom" ,message: `Petition Created!`, duration: 5000, type: "is-success"});
-                    this.goToPage(`/petitions/${this.petitionId}`);
                 }).catch(error => {
                     console.error(error);
                     this.$buefy.snackbar.open({message: `Error creating petition, try again later`, duration: 5000, type: "is-danger"});
@@ -200,23 +207,27 @@
                         {headers: {"content-type": this.heroImage.type, 'X-Authorization': token}
                         }).then(response => {
                         console.log(response);
+
                     })
                         .catch(error => {
                             console.error(error);
                         });
                 }
-                this.signPetition();
-            },
-            async signPetition() {
+
+
                 await server.post(`/api/v1/petitions/${this.petitionId}/signatures`, null,
                     {headers: {'X-Authorization': sessionStorage.getItem('token')}})
                     .then(response => {
                         console.log(response);
                         console.log("Petition Signed");
+                        this.goToPage(`/petitions/${this.petitionId}`);
                     })
                     .catch(error => {
                         console.error(error);
                     });
+
+
+
             },
             async logout() {
                 let token = sessionStorage.getItem('token');

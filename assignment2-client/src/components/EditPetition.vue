@@ -41,7 +41,7 @@
                 <div>
                     <h1><strong>{{this.petition.title}}</strong></h1><hr/>
                 </div>
-                <img class="main-photo" :src="this.petition.heroImage" alt="No Hero Image"/><hr>
+                <img class="main-photo" :src="this.originalHeroImage" alt="No Hero Image"/><hr>
             </div>
                 <div class="notification text-center ">
                     <h1><strong>Current Details:</strong></h1>
@@ -133,7 +133,8 @@
                 toUpdate: false,
                 //get user data here
                 petition: null,
-                newClosingDate: null
+                newClosingDate: null,
+                originalHeroImage: null
             };
         },
         async mounted() {
@@ -144,11 +145,9 @@
             this.petitionId = this.$route.params.id;
             await server.get(`api/v1/petitions/${this.petitionId}`).then(response => {
                 this.petition = response.data;
+                console.log(this.petition);
                 if (this.petition.closingDate !== null) {
                     this.petition.closingDate = new Date(this.closingDate).toLocaleString();
-                }
-                if (this.petition.heroImage === undefined || this.petition.heroImage === null) {
-                    this.petition.heroImage = "https://i.imgur.com/QKN0RVE.png";
                 }
             }).catch(error => {
                 console.error(error);
@@ -166,6 +165,14 @@
                 }
             }).catch(error => {
                 console.error(error);
+            });
+
+            await server.get(`/api/v1/petitions/${this.petitionId}/photo`, {responseType : 'blob'})
+                .then(response => {
+                    this.originalHeroImage = URL.createObjectURL(response.data);
+                }).catch(error => {
+                console.error(error)
+                this.heroImage = "https://i.imgur.com/QKN0RVE.png";
             });
         },
         methods: {
