@@ -69,7 +69,7 @@
         </b-field>
         <b-button v-if="heroImage" type="is-danger"
                   icon-right="delete" v-on:click="removeHeroImage">
-            Delete
+            Remove selection
         </b-button>
 
         <b-field label="Fields marked * are required!"></b-field>
@@ -111,6 +111,11 @@
                 country: null,
                 city: null,
                 heroImage: null
+            }
+        },
+        mounted() {
+            if (sessionStorage.getItem('token') !== null) {
+                sessionStorage.clear();
             }
         },
         methods: {

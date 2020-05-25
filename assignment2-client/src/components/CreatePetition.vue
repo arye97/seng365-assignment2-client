@@ -152,18 +152,6 @@
                 }
                 return true
             },
-
-            async signPetition() {
-                await server.post(`/api/v1/petitions/${this.petitionId}/signatures`, null,
-                    {headers: {'X-Authorization': sessionStorage.getItem('token')}})
-                    .then(response => {
-                        console.log(response);
-                        console.log("Petition Signed");
-                    })
-                    .catch(error => {
-                        console.error(error);
-                    });
-            },
             async createPetition() {
                 let token = sessionStorage.getItem('token');
                 if (this.closingDate !== null) {
@@ -189,14 +177,16 @@
                     "title": this.title,
                     "description": this.description,
                     "categoryId": this.categoryId.categoryId,
-                    "closingDate": this.newClosingDate,
                     "heroImage": "No hero image!"
                 };
-
+                if (this.closingDate != null) {
+                    newPetition["closingDate"] = this.newClosingDate;
+                }
                 await server.post('/api/v1/petitions', newPetition,
                     {headers: {"content-type": "application/json", 'X-Authorization': token}
                 }).then(response => {
                     this.petitionId = response.data.petitionId;
+                    console.log(this.petitionId);
                     this.$buefy.snackbar.open({position: "is-bottom" ,message: `Petition Created!`, duration: 5000, type: "is-success"});
                     this.goToPage(`/petitions/${this.petitionId}`);
                 }).catch(error => {
@@ -217,6 +207,17 @@
                 }
                 this.signPetition();
             },
+            async signPetition() {
+                await server.post(`/api/v1/petitions/${this.petitionId}/signatures`, null,
+                    {headers: {'X-Authorization': sessionStorage.getItem('token')}})
+                    .then(response => {
+                        console.log(response);
+                        console.log("Petition Signed");
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            },
             async logout() {
                 let token = sessionStorage.getItem('token');
                 await server.post('/api/v1/users/logout', null,
@@ -226,11 +227,13 @@
                     console.log(response);
                     console.log('User logged out successfully!');
                     sessionStorage.setItem('token', null);
+                    sessionStorage.clear();
                     this.$router.push('/'); //routes back to login
                 }).catch(error => {
                     console.error(error);
                     console.log("User already logged out.");
                     sessionStorage.setItem('token', null);
+                    sessionStorage.clear();
                     this.$router.push('/'); //still get them out
                 })
             }

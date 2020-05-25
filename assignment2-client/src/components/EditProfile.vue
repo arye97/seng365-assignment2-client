@@ -35,6 +35,32 @@
         <section>
             <div class="container">
                 <div class="notification text-center">
+                    <h1>Welcome to your Petitions Account <strong> {{this.user.name}} </strong></h1><hr/>
+                    <img :src="this.originalProfilePhoto" alt="No Hero Image" /><br/>
+                    <br/>
+                    <b-button class="text-center" type="is-danger"
+                              icon-right="delete" v-if="this.hasProfileImage" v-on:click="confirm">
+                        Delete my profile picture
+                    </b-button>
+                </div>
+
+            </div><br/>
+            <div class="container">
+                <div class="notification">
+                    Your details: <br/>
+                    Name: {{this.user.name}}<br/>
+                    City: {{this.user.city}}<br/>
+                    Country: {{this.user.country}}<br/>
+                    Email: {{this.user.email}}<br/>
+
+                </div>
+            </div>
+        </section>
+        <br/>
+
+        <section>
+            <div class="container">
+                <div class="notification text-center">
                     Edit your account details
                 </div>
             </div><br/>
@@ -43,17 +69,12 @@
                         <div class="content">
 
                             <section >
-                                <b-button type="is-danger"
-                                          icon-right="delete" v-if="this.originalProfilePhoto" v-on:click="confirm">
-                                    Delete my profile picture
-                                </b-button>
-
                                 <b-field label="Name">
-                                    <b-input v-model="name" placeholder="Barry Berkman"></b-input>
+                                    <b-input v-model="name" :placeholder="this.user.name"></b-input>
                                 </b-field>
 
                                 <b-field label="Email">
-                                    <b-input v-model="email" type="email" placeholder="barry@block.com"></b-input>
+                                    <b-input v-model="email" type="email" :placeholder="this.user.email"></b-input>
                                 </b-field>
 
                                 <b-field label="New Password">
@@ -67,7 +88,7 @@
                                 <b-field label="City">
                                     <b-input type="text"
                                              v-model="city"
-                                             placeholder="Christchurch">
+                                             :placeholder="this.user.city">
                                     </b-input>
                                 </b-field>
                                 <b-field label="Set a new profile photo"></b-field>
@@ -89,7 +110,7 @@
                                 <b-field label="Country">
                                     <b-input type="text"
                                              v-model="country"
-                                             placeholder="New Zealand">
+                                             :placeholder="this.user.country">
                                     </b-input>
                                 </b-field><br/>
                                 <b-button type="is-primary" outlined v-on:click="updateDetails">Update Details</b-button>
@@ -123,19 +144,34 @@
                 open: true,
                 fullheight: true,
                 toUpdate: false,
-
+                hasProfileImage: false,
                 //get user data here
                 user: null,
                 originalProfilePhoto: null
             };
         },
-        async mounted() {
+        mounted() {
             let userId = sessionStorage.getItem('userId');
-            await server.get(`/api/v1/users/${userId}/photo`, {responseType: 'blob'})
+            let token = sessionStorage.getItem('token');
+            if (!token) {
+                this.$router.push('/login');
+            }
+            server.get(`/api/v1/users/${userId}`)
                 .then(response => {
-                    this.originalProfilePhoto = URL.createObjectURL(response.data);
+                    this.user = response.data;
+                    console.log(this.user)
                 })
                 .catch(error => {
+                    console.error(error)
+                });
+
+            server.get(`/api/v1/users/${userId}/photo`, {responseType: 'blob'})
+                .then(response => {
+                    this.originalProfilePhoto = URL.createObjectURL(response.data);
+                    this.hasProfileImage = true;
+                })
+                .catch(error => {
+                    this.originalProfilePhoto = "https://i.imgur.com/QKN0RVE.png";
                     console.error(error)
                 })
         },
@@ -149,7 +185,6 @@
                     message: 'Delete your profile picture?',
                     onConfirm: () => {
                         this.deleteProfilePhoto();
-                        this.$buefy.toast.open('Profile picture Removed');
                     }
                 })
             },
@@ -158,9 +193,12 @@
                 let userId = sessionStorage.getItem('userId');
                 server.delete(`/api/v1/users/${userId}/photo`, {headers: {'X-Authorization' : token}})
                     .then(response => {
+                        this.originalProfilePhoto = "https://i.imgur.com/QKN0RVE.png";
+                        this.hasProfileImage = false;
                         this.$buefy.snackbar.open({message: `Profile picture deleted`, duration: 2500, type: "is-success"});
                         console.log(response);
                     }).catch(error => {
+                        this.hasProfileImage = false;
                         console.error(error);
                     this.$buefy.snackbar.open({message: `Could not delete photo, try again later`, duration: 2500, type: "is-danger"});
                     });
@@ -176,7 +214,7 @@
                 }
                 return true
             },
-            async updateDetails () {
+            updateDetails () {
 
                 let token = sessionStorage.getItem('token');
                 let userId = sessionStorage.getItem('userId');
@@ -193,7 +231,7 @@
                     return;
                 }
                 if (this.updatedDetails.length > 0) {
-                    await server.patch('/api/v1/users/'.concat(userId), this.updatedDetails,
+                    server.patch('/api/v1/users/'.concat(userId), this.updatedDetails,
                         {headers: {"content-type": "application/json", 'X-Authorization': token}}
                     ).then(response => {
                         console.log(response);
@@ -206,19 +244,20 @@
                     });
                 }
                 if (this.validateImageType(this.heroImage)) {
-                    await server.put(`/api/v1/users/${userId}/photo`,
+                    server.put(`/api/v1/users/${userId}/photo`,
                         this.heroImage,
                         {headers: {"content-type": this.heroImage.type, 'X-Authorization': token}
                         }).then(response => {
-                        this.$buefy.snackbar.open({position: "is-bottom-left" ,message: `User profile image saved successfully`, duration: 5000, type: "is-success"});
-                        console.log(response);
-                    })
+                            this.originalProfilePhoto = this.heroImage;
+                            this.hasProfileImage = true;
+                            this.$buefy.snackbar.open({position: "is-bottom-left" ,message: `User profile image saved successfully`, duration: 5000, type: "is-success"});
+                            console.log(response);
+                        })
                         .catch(error => {
                             console.error(error)
                             this.$buefy.snackbar.open({message: `Error saving profile photo`, duration: 2500, type: "is-danger"});
                         });
                 }
-                await server.put
             },
             async logout() {
                 let token = sessionStorage.getItem('token');
@@ -229,11 +268,13 @@
                     console.log(response);
                     console.log('User logged out successfully!');
                     sessionStorage.setItem('token', null);
+                    sessionStorage.clear();
                     this.$router.push('/'); //routes back to login
                 }).catch(error => {
                     console.error(error);
                     console.log("User already logged out.");
                     sessionStorage.setItem('token', null);
+                    sessionStorage.clear();
                     this.$router.push('/'); //still get them out
                 })
             }
@@ -242,5 +283,7 @@
 </script>
 
 <style scoped>
-
+    .text-center {
+        text-align: center;
+    }
 </style>

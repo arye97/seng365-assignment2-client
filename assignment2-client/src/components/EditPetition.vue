@@ -37,6 +37,22 @@
                 </div>
             </div><br/>
             <div class="container">
+            <div class="notification text-center ">
+                <div>
+                    <h1><strong>{{this.petition.title}}</strong></h1><hr/>
+                </div>
+                <img class="main-photo" :src="this.petition.heroImage" alt="No Hero Image"/><hr>
+            </div>
+                <div class="notification text-center ">
+                    <h1><strong>Current Details:</strong></h1>
+                    <strong>Description:</strong> <br/>{{this.petition.description}}<br/><br/>
+                    <div v-if="this.petition.closingDate">
+                        <strong>Closing Date:</strong> <br/>{{this.petition.closingDate}}
+                    </div>
+                </div>
+            </div>
+
+            <div class="container">
                 <div class="notification">
                     <div class="content">
 
@@ -85,7 +101,6 @@
                                 >
                                 </b-datetimepicker>
                             </b-field>
-                            {{ new Date(closingDate)}}
                             <hr/>
                             <b-button type="is-primary" outlined v-on:click="updatePetition">Update</b-button>
                         </section>
@@ -109,7 +124,7 @@
                 title: null,
                 description: null,
                 categoryId: null,
-                closingDate: new Date(),
+                closingDate: null,
                 heroImage: null,
                 categories: [],
                 //for buefy functionality
@@ -127,6 +142,17 @@
             }
             //get this petitions Id
             this.petitionId = this.$route.params.id;
+            await server.get(`api/v1/petitions/${this.petitionId}`).then(response => {
+                this.petition = response.data;
+                if (this.petition.closingDate !== null) {
+                    this.petition.closingDate = new Date(this.closingDate).toLocaleString();
+                }
+                if (this.petition.heroImage === undefined || this.petition.heroImage === null) {
+                    this.petition.heroImage = "https://i.imgur.com/QKN0RVE.png";
+                }
+            }).catch(error => {
+                console.error(error);
+            });
 
             //get categories
             await server.get('api/v1/petitions/categories').then(response => {
@@ -157,25 +183,27 @@
                 }
                 return true
             },
-            async updatePetition() {
+            updatePetition() {
                 let token = sessionStorage.getItem('token');
-                this.newClosingDate = this.closingDate;
-                let year = this.newClosingDate.getFullYear();
-                let month = this.newClosingDate.getMonth()+1;
-                let day = this.newClosingDate.getDate();
-                let hour = this.newClosingDate.getHours();
-                let minutes = this.newClosingDate.getMinutes();
-                let seconds = this.newClosingDate.getSeconds();
-                let mseconds = this.newClosingDate.getMilliseconds();
+                if (this.closingDate !== null ) {
+                    this.newClosingDate = this.closingDate;
+                    let year = this.newClosingDate.getFullYear();
+                    let month = this.newClosingDate.getMonth() + 1;
+                    let day = this.newClosingDate.getDate();
+                    let hour = this.newClosingDate.getHours();
+                    let minutes = this.newClosingDate.getMinutes();
+                    let seconds = this.newClosingDate.getSeconds();
+                    let mseconds = this.newClosingDate.getMilliseconds();
 
-                if (day < 10) {
-                    day = '0' + day;
-                }
-                if (month < 10) {
-                    month = '0' + month;
-                }
+                    if (day < 10) {
+                        day = '0' + day;
+                    }
+                    if (month < 10) {
+                        month = '0' + month;
+                    }
 
-                this.newClosingDate = (year + '-' + month + '-' + day + ' ' + hour + ':' + minutes + ':' + seconds + '.' + mseconds);
+                    this.newClosingDate = (year + '-' + month + '-' + day + ' ' + hour + ':' + minutes + ':' + seconds + '.' + mseconds);
+                }
                 let updatedDetails = {};
 
                 if (this.title !== null) {updatedDetails['title'] = this.title}
@@ -184,27 +212,40 @@
                 if (this.closingDate !== null) {updatedDetails['closingDate'] = this.closingDate}
                 if (this.heroImage !== null) {updatedDetails['heroImage'] = this.heroImage}
 
-
-                await server.patch('/api/v1/petitions', updatedDetails,
-                    {headers: {"content-type": "application/json", 'X-Authorization': token}
-                    }).then(response => {
+                if (!(this.title === null && this.description === null && this.categoryId === null && this.closingDate === null)) {
+                    server.patch('/api/v1/petitions', updatedDetails,
+                        {
+                            headers: {"content-type": "application/json", 'X-Authorization': token}
+                        }).then(response => {
                         console.log(response);
-                        this.$buefy.snackbar.open({position: "is-bottom" ,message: `Petition Updated!`, duration: 5000, type: "is-success"});
+                        this.$buefy.snackbar.open({
+                            position: "is-bottom",
+                            message: `Petition Updated!`,
+                            duration: 5000,
+                            type: "is-success"
+                        });
                         this.goToPage(`/petitions/${this.petitionId}`);
                     }).catch(error => {
                         console.error(error);
-                        this.$buefy.snackbar.open({message: `Error updating petition, try again later`, duration: 5000, type: "is-danger"});
+                        this.$buefy.snackbar.open({
+                            message: `Error updating petition, try again later`,
+                            duration: 5000,
+                            type: "is-danger"
+                        });
                     });
+                }
 
                 if (this.validateImageType(this.heroImage)) {
-                    await server.put(`/api/v1/petitions/${this.petitionId}/photo`,
+                    server.put(`/api/v1/petitions/${this.petitionId}/photo`,
                         this.heroImage,
                         {headers: {"content-type": this.heroImage.type, 'X-Authorization': token}
                         }).then(response => {
-                        console.log(response);
-                    })
+                            this.$buefy.snackbar.open({position: "is-bottom-left" ,message: `Petition Image saved succesfully`, duration: 5000, type: "is-success"});
+                            console.log(response);
+                        })
                         .catch(error => {
-                            console.error(error);
+                            console.error(error)
+                            this.$buefy.snackbar.open({message: `Error saving petition photo`, duration: 2500, type: "is-danger"});
                         });
                 }
             },
@@ -217,11 +258,13 @@
                     console.log(response);
                     console.log('User logged out successfully!');
                     sessionStorage.setItem('token', null);
+                    sessionStorage.clear();
                     this.$router.push('/'); //routes back to login
                 }).catch(error => {
                     console.error(error);
                     console.log("User already logged out.");
                     sessionStorage.setItem('token', null);
+                    sessionStorage.clear();
                     this.$router.push('/'); //still get them out
                 })
             }

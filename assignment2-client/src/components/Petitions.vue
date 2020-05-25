@@ -313,6 +313,7 @@
                         this.allPetitionsData[i]['heroImage'] = URL.createObjectURL(response.data);
                     })
                     .catch(error => {
+                        this.allPetitionsData[i]['heroImage'] = "https://i.imgur.com/QKN0RVE.png";
                         console.log(error)
                     });
                 i++;
@@ -335,11 +336,13 @@
                     console.log(response);
                     console.log('User logged out successfully!');
                     sessionStorage.setItem('token', null);
+                    sessionStorage.clear();
                     this.$router.push('/'); //routes back to login
                 }).catch(error => {
                     console.error(error);
                     console.log("User already logged out.");
                     sessionStorage.setItem('token', null);
+                    sessionStorage.clear();
                     this.$router.push('/'); //still get them out
                 })
             }
