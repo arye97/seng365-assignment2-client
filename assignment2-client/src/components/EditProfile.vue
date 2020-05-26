@@ -3,8 +3,8 @@
         <section>
             <b-navbar>
                 <template slot="brand">
-                    <b-navbar-item tag="router-link" :to="{ path: '/about' }">
-                        <h1>About Petitions</h1>
+                    <b-navbar-item>
+                        <h1>Petitions</h1>
                     </b-navbar-item>
                 </template>
                 <template slot="start">
@@ -36,7 +36,7 @@
             <div class="container">
                 <div class="notification text-center">
                     <h1>Welcome to your Petitions Account <strong> {{this.user.name}} </strong></h1><hr/>
-                    <img :src="this.originalProfilePhoto" alt="No Hero Image" /><br/>
+                    <img class="main-photo" :src="this.originalProfilePhoto" alt="No Hero Image" /><br/>
                     <br/>
                     <b-button class="text-center" type="is-danger"
                               icon-right="delete" v-if="this.hasProfileImage" v-on:click="confirm">
@@ -156,9 +156,10 @@
             if (!token) {
                 this.$router.push('/login');
             }
-            server.get(`/api/v1/users/${userId}`)
+            server.get(`/api/v1/users/${userId}`, {headers: {'X-Authorization' : token}})
                 .then(response => {
                     this.user = response.data;
+                    console.log(response.data)
                 })
                 .catch(error => {
                     console.error(error)
@@ -220,19 +221,20 @@
 
                 let token = sessionStorage.getItem('token');
                 let userId = sessionStorage.getItem('userId');
-                if (this.name !== null) {this.updatedDetails['name'] = this.name}
-                if (this.email !== null) {this.updatedDetails['email'] = this.email}
-                if (this.password !== null) {this.updatedDetails['password'] = this.password}
-                if (this.currentPassword !== null) {this.updatedDetails['currentPassword'] = this.currentPassword}
-                if (this.city !== null) {this.updatedDetails['city'] = this.city}
-                if (this.country !== null) {this.updatedDetails['country'] = this.country}
+                let numDetails = 0;
+                if (this.name !== null) {this.updatedDetails['name'] = this.name; numDetails++;}
+                if (this.email !== null) {this.updatedDetails['email'] = this.email; numDetails++;}
+                if (this.password !== null) {this.updatedDetails['password'] = this.password; numDetails++;}
+                if (this.currentPassword !== null) {this.updatedDetails['currentPassword'] = this.currentPassword; numDetails++;}
+                if (this.city !== null) {this.updatedDetails['city'] = this.city; numDetails++;}
+                if (this.country !== null) {this.updatedDetails['country'] = this.country; numDetails++;}
 
 
                 if ((this.password === null && this.currentPassword !== null) || (this.currentPassword === null && this.password !== null)) {
                     this.$buefy.snackbar.open({message: `Both password fields must be filled in, not just one!`, duration: 2500, type: "is-danger"});
                     return;
                 }
-                if (this.updatedDetails.length > 0) {
+                if (numDetails > 0) {
                     server.patch('/api/v1/users/'.concat(userId), this.updatedDetails,
                         {headers: {"content-type": "application/json", 'X-Authorization': token}}
                     ).then(response => {
@@ -287,5 +289,12 @@
 <style scoped>
     .text-center {
         text-align: center;
+    }
+
+    .main-photo {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 50%;
     }
 </style>

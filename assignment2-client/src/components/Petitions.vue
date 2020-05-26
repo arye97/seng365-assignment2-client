@@ -3,12 +3,12 @@
         <section>
             <b-navbar>
                 <template slot="brand">
-                    <b-navbar-item tag="router-link" :to="{ path: '/about' }">
-                        <h2>About Petitions</h2>
+                    <b-navbar-item>
+                        <h2>Petitions</h2>
                     </b-navbar-item>
                 </template>
                 <template slot="start">
-                    <template v-if="isLoggedIn">
+                    <template v-if="this.isLoggedIn">
                         <b-navbar-item v-on:click="goToPage('/profile')">
                             <h2>My Profile</h2>
                         </b-navbar-item>
@@ -236,7 +236,8 @@
                     {
                         field: 'heroImage',
                         label: 'Hero Image',
-                        isImage: true
+                        isImage: true,
+                        centered: true,
                     },
                     {
                         field: 'title',

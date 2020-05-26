@@ -3,8 +3,8 @@
         <section>
             <b-navbar>
                 <template slot="brand">
-                    <b-navbar-item tag="router-link" :to="{ path: '/about' }">
-                        <h1>About Petitions</h1>
+                    <b-navbar-item>
+                        <h1>Petitions</h1>
                     </b-navbar-item>
                 </template>
                 <template slot="start">
@@ -44,8 +44,9 @@
                 <img class="main-photo" :src="this.originalHeroImage" alt="No Hero Image"/><hr>
             </div>
                 <div class="notification text-center ">
-                    <h1><strong>Current Details:</strong></h1>
+                    <h1><strong>Current Details:</strong></h1><br/>
                     <strong>Description:</strong> <br/>{{this.petition.description}}<br/><br/>
+                    <strong>Category:</strong> <br/>{{this.petition.category}}<br/><br/>
                     <div v-if="this.petition.closingDate">
                         <strong>Closing Date:</strong> <br/>{{this.petition.closingDate}}
                     </div>
@@ -145,7 +146,6 @@
             this.petitionId = this.$route.params.id;
             await server.get(`api/v1/petitions/${this.petitionId}`).then(response => {
                 this.petition = response.data;
-                console.log(this.petition);
                 if (this.petition.closingDate !== null) {
                     this.petition.closingDate = new Date(this.closingDate).toLocaleString();
                 }
@@ -216,15 +216,14 @@
                 if (this.title !== null) {updatedDetails['title'] = this.title}
                 if (this.description !== null) {updatedDetails['description'] = this.description}
                 if (this.categoryId !== null) {updatedDetails['categoryId'] = this.categoryId.categoryId}
-                if (this.closingDate !== null) {updatedDetails['closingDate'] = this.closingDate}
+                if (this.newClosingDate !== null) {updatedDetails['closingDate'] = this.newClosingDate}
                 if (this.heroImage !== null) {updatedDetails['heroImage'] = this.heroImage}
 
                 if (!(this.title === null && this.description === null && this.categoryId === null && this.closingDate === null)) {
-                    server.patch('/api/v1/petitions', updatedDetails,
+                    server.patch(`/api/v1/petitions/${this.petitionId}`, updatedDetails,
                         {
                             headers: {"content-type": "application/json", 'X-Authorization': token}
-                        }).then(response => {
-                        console.log(response);
+                        }).then(() => {
                         this.$buefy.snackbar.open({
                             position: "is-bottom",
                             message: `Petition Updated!`,

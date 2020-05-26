@@ -3,15 +3,15 @@
         <div>
             <b-navbar>
                 <template slot="brand">
-                    <b-navbar-item tag="router-link" :to="{ path: '/about' }">
-                        <h1>About Petitions</h1>
+                    <b-navbar-item>
+                        <h1>Petitions</h1>
                     </b-navbar-item>
                 </template>
                 <template slot="start">
                     <b-navbar-item v-on:click="goToPage('/petitions')">
                         View Petitions
                     </b-navbar-item>
-                    <b-navbar-item v-on:click="goToPage('/profile')">
+                    <b-navbar-item v-if="this.isLoggedIn" v-on:click="goToPage('/profile')">
                         My Profile
                     </b-navbar-item>
                 </template>
@@ -94,7 +94,7 @@
             }
         },
         mounted() {
-            if (sessionStorage.getItem('token') !== null) {
+            if (sessionStorage.getItem('token') !== null && sessionStorage.getItem('token') !== "null") {
                 this.isLoggedIn = true;
             }
 
@@ -113,11 +113,13 @@
                     console.log(response);
                     console.log('User logged out successfully!');
                     sessionStorage.setItem('token', null);
+                    sessionStorage.clear();
                     this.$router.push('/'); //routes back to login
                 }).catch(error => {
                     console.error(error);
                     console.log("User already logged out.");
                     sessionStorage.setItem('token', null);
+                    sessionStorage.clear();
                     this.$router.push('/'); //still get them out
                 })
             },

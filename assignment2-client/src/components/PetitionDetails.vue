@@ -3,8 +3,8 @@
         <section>
             <b-navbar>
                 <template slot="brand">
-                    <b-navbar-item tag="router-link" :to="{ path: '/about' }">
-                        <h1>About Petitions</h1>
+                    <b-navbar-item>
+                        <h1>Petitions</h1>
                     </b-navbar-item>
                 </template>
                 <template slot="start">
@@ -53,6 +53,7 @@
                 </div>
                 <div class="notification text-center" >
                     <strong>Description:</strong> <br/>{{this.petition.description}}<br/><br/>
+                    <strong>Category:</strong> <br/>{{this.petition.category}}<br/><br/>
                     <strong>Petition Author Details:</strong><br/>
                     <template>
                         <b-table :data="authorData">
@@ -100,6 +101,7 @@
             <div class="container">
                 <div class="notification text-center">
                     <div v-if="!isMyPetition">
+                        <br/>
                         <button class="button is-primary-outlined is-danger" v-if="unsign" @click="confirm">
                             Remove Signature
                         </button>
@@ -111,7 +113,8 @@
                         <h1>You can't remove your signature from a petition you created</h1>
                     </div>
                     <br/><br/>
-                    <strong>Signature Count:</strong> <br/> {{this.petition.signatureCount}}<br/><br/>
+                    <strong>This petition has {{this.petition.signatureCount}} signatories </strong> <br/>
+                    <strong v-if="unsign">and you are one of them</strong><br/><br/>
 
                     <template>
                         <b-table :data="signatoryData">
@@ -274,7 +277,7 @@
                             'name': response.data[i]['name'],
                             'city': response.data[i]['city'],
                             'country': response.data[i]['country'],
-                            'dateSigned': response.data[i]['dateSigned']
+                            'signedDate': response.data[i]['signedDate']
                         };
                         this.iHavePetitions = true;
                         if (newSignatory.signatoryId === parseInt(userId, 10)) {
@@ -287,7 +290,6 @@
                 }).catch(error => {
                     console.error(error);
                 });
-
 
             let i = 0;
             while (i < this.signatoryData.length) {
@@ -308,9 +310,10 @@
 
             await server.get('/api/v1/petitions/'.concat(this.petitionId)).then(response => {
                 this.createdDate = new Date(response.data.createdDate).toDateString();
-                console.log(response.data)
                 if (response.data.closingDate !== null && response.data.closingDate !== undefined) {
                     this.closingDate = new Date(response.data.closingDate).toDateString();
+                } else {
+                    this.closingDate = 'This Petition has no end date set'
                 }
                 this.petition = response.data;
                 this.signatureCount = this.petition.signatureCount;
